@@ -46,9 +46,9 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
       curve: const Interval(0.3, 1.0, curve: Curves.easeOut),
     ));
 
-    // Load initial data
-    context.read<PostsBloc>().add(const LoadAllPostsEvent());
-    context.read<TodosBloc>().add(const LoadAllTodosEvent());
+    // Preload initial data only once when app starts
+    context.read<PostsBloc>().add(const LoadInitialPostsEvent());
+    context.read<TodosBloc>().add(const LoadInitialTodosEvent());
 
     // Start header animation
     _headerAnimationController.forward();

@@ -12,11 +12,35 @@ class PostsTab extends StatefulWidget {
 }
 
 class _PostsTabState extends State<PostsTab> {
+  late ScrollController _scrollController;
+
   @override
   void initState() {
     super.initState();
-    // Load all posts when tab is initialized
+    _scrollController = ScrollController();
+    _scrollController.addListener(_onScroll);
+
+    // Use preloaded data - no need to reload
     context.read<PostsBloc>().add(const LoadAllPostsEvent());
+  }
+
+  @override
+  void dispose() {
+    _scrollController.dispose();
+    super.dispose();
+  }
+
+  void _onScroll() {
+    if (_isBottom) {
+      context.read<PostsBloc>().add(const LoadMorePostsEvent());
+    }
+  }
+
+  bool get _isBottom {
+    if (!_scrollController.hasClients) return false;
+    final maxScroll = _scrollController.position.maxScrollExtent;
+    final currentScroll = _scrollController.offset;
+    return currentScroll >= (maxScroll * 0.9); // Load more when 90% scrolled
   }
 
   @override
@@ -33,7 +57,7 @@ class _PostsTabState extends State<PostsTab> {
           Expanded(
             child: BlocBuilder<PostsBloc, PostsState>(
               builder: (context, state) {
-                if (state.isLoading) {
+                if (state.isLoading && state.posts.isEmpty) {
                   return ListView.builder(
                     padding: const EdgeInsets.all(16),
                     itemCount: 6,
@@ -50,7 +74,7 @@ class _PostsTabState extends State<PostsTab> {
                   );
                 }
 
-                if (state.error != null) {
+                if (state.error != null && state.posts.isEmpty) {
                   return Center(
                     child: Container(
                       margin: const EdgeInsets.all(32),
@@ -99,21 +123,10 @@ class _PostsTabState extends State<PostsTab> {
                             onPressed: () {
                               context
                                   .read<PostsBloc>()
-                                  .add(const LoadAllPostsEvent());
+                                  .add(const RefreshPostsEvent());
                             },
-                            icon: const Icon(Icons.refresh_rounded),
-                            label: const Text('Try Again'),
-                            style: ElevatedButton.styleFrom(
-                              backgroundColor: colorScheme.error,
-                              foregroundColor: colorScheme.onError,
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: 20,
-                                vertical: 10,
-                              ),
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(10),
-                              ),
-                            ),
+                            icon: const Icon(Icons.refresh),
+                            label: const Text('Retry'),
                           ),
                         ],
                       ),
@@ -170,32 +183,52 @@ class _PostsTabState extends State<PostsTab> {
 
                 return RefreshIndicator(
                   onRefresh: () async {
-                    context.read<PostsBloc>().add(const LoadAllPostsEvent());
+                    context.read<PostsBloc>().add(const RefreshPostsEvent());
                   },
                   color: colorScheme.primary,
-                  child: SingleChildScrollView(
-                    child: Column(
-                      children: [
-                        // Compact header section
-                        _postHeaderRow(colorScheme, theme),
-                        ListView.builder(
-                          shrinkWrap: true,
-                          physics: const NeverScrollableScrollPhysics(),
-                          padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
-                          itemCount: state.posts.length,
-                          itemBuilder: (context, index) {
-                            final post = state.posts[index];
-                            return PostCard(
-                              post: post,
-                              onTap: () {
-                                // Navigate to post detail page
-                                // context.go('/post/${post.id}');
-                              },
-                            );
+                  child: CustomScrollView(
+                    controller: _scrollController,
+                    slivers: [
+                      SliverToBoxAdapter(
+                        child: _postHeaderRow(colorScheme, theme),
+                      ),
+                      SliverList(
+                        delegate: SliverChildBuilderDelegate(
+                          (context, index) {
+                            if (index < state.posts.length) {
+                              final post = state.posts[index];
+                              return Padding(
+                                padding:
+                                    const EdgeInsets.fromLTRB(16, 0, 16, 12),
+                                child: PostCard(
+                                  post: post,
+                                  onTap: () {
+                                    // Navigate to post detail page
+                                    // context.go('/post/${post.id}');
+                                  },
+                                ),
+                              );
+                            } else {
+                              // Show loading indicator at the bottom
+                              return Container(
+                                padding: const EdgeInsets.all(16),
+                                child: Center(
+                                  child: state.isLoadingMore
+                                      ? const CircularProgressIndicator()
+                                      : const SizedBox.shrink(),
+                                ),
+                              );
+                            }
                           },
+                          childCount: state.posts.length +
+                              (state.isLoadingMore ? 1 : 0),
                         ),
-                      ],
-                    ),
+                      ),
+                      // Add some bottom padding
+                      const SliverToBoxAdapter(
+                        child: SizedBox(height: 16),
+                      ),
+                    ],
                   ),
                 );
               },
@@ -264,14 +297,10 @@ class _PostsTabState extends State<PostsTab> {
             ),
           ),
 
-          // Quick stats
+          // Posts count indicator
           BlocBuilder<PostsBloc, PostsState>(
             builder: (context, state) {
               if (state.posts.isNotEmpty) {
-                final totalViews = state.posts.fold<int>(
-                  0,
-                  (sum, post) => sum + post.views,
-                );
                 return Container(
                   padding:
                       const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
@@ -287,13 +316,13 @@ class _PostsTabState extends State<PostsTab> {
                     mainAxisSize: MainAxisSize.min,
                     children: [
                       Icon(
-                        Icons.visibility_outlined,
+                        Icons.article_outlined,
                         size: 12,
                         color: colorScheme.onPrimaryContainer,
                       ),
                       const SizedBox(width: 4),
                       Text(
-                        '${(totalViews / 1000).toStringAsFixed(1)}K',
+                        '${state.posts.length}',
                         style: theme.textTheme.bodySmall?.copyWith(
                           color: colorScheme.onPrimaryContainer,
                           fontWeight: FontWeight.bold,

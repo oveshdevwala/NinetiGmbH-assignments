@@ -12,11 +12,35 @@ class TodosTab extends StatefulWidget {
 }
 
 class _TodosTabState extends State<TodosTab> {
+  late ScrollController _scrollController;
+
   @override
   void initState() {
     super.initState();
-    // Load all todos when tab is initialized
+    _scrollController = ScrollController();
+    _scrollController.addListener(_onScroll);
+
+    // Use preloaded data - no need to reload
     context.read<TodosBloc>().add(const LoadAllTodosEvent());
+  }
+
+  @override
+  void dispose() {
+    _scrollController.dispose();
+    super.dispose();
+  }
+
+  void _onScroll() {
+    if (_isBottom) {
+      context.read<TodosBloc>().add(const LoadMoreTodosEvent());
+    }
+  }
+
+  bool get _isBottom {
+    if (!_scrollController.hasClients) return false;
+    final maxScroll = _scrollController.position.maxScrollExtent;
+    final currentScroll = _scrollController.offset;
+    return currentScroll >= (maxScroll * 0.9); // Load more when 90% scrolled
   }
 
   @override
@@ -31,7 +55,7 @@ class _TodosTabState extends State<TodosTab> {
           Expanded(
             child: BlocBuilder<TodosBloc, TodosState>(
               builder: (context, state) {
-                if (state.isLoading) {
+                if (state.isLoading && state.todos.isEmpty) {
                   return ListView.builder(
                     padding: const EdgeInsets.all(16),
                     itemCount: 8,
@@ -48,7 +72,7 @@ class _TodosTabState extends State<TodosTab> {
                   );
                 }
 
-                if (state.error != null) {
+                if (state.error != null && state.todos.isEmpty) {
                   return Center(
                     child: Container(
                       margin: const EdgeInsets.all(32),
@@ -94,26 +118,15 @@ class _TodosTabState extends State<TodosTab> {
                             ),
                             textAlign: TextAlign.center,
                           ),
-                          const SizedBox(height: 20),
+                          const SizedBox(height: 16),
                           ElevatedButton.icon(
                             onPressed: () {
                               context
                                   .read<TodosBloc>()
-                                  .add(const LoadAllTodosEvent());
+                                  .add(const RefreshTodosEvent());
                             },
-                            icon: const Icon(Icons.refresh_rounded),
-                            label: const Text('Try Again'),
-                            style: ElevatedButton.styleFrom(
-                              backgroundColor: theme.colorScheme.secondary,
-                              foregroundColor: theme.colorScheme.onSecondary,
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: 24,
-                                vertical: 12,
-                              ),
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(12),
-                              ),
-                            ),
+                            icon: const Icon(Icons.refresh),
+                            label: const Text('Retry'),
                           ),
                         ],
                       ),
@@ -169,14 +182,6 @@ class _TodosTabState extends State<TodosTab> {
                   );
                 }
 
-                // Calculate completion stats
-                final completedCount =
-                    state.todos.where((todo) => todo.completed).length;
-                final totalCount = state.todos.length;
-                final completionPercentage = totalCount > 0
-                    ? (completedCount / totalCount * 100).round()
-                    : 0;
-
                 return Column(
                   children: [
                     Expanded(
@@ -184,36 +189,55 @@ class _TodosTabState extends State<TodosTab> {
                         onRefresh: () async {
                           context
                               .read<TodosBloc>()
-                              .add(const LoadAllTodosEvent());
+                              .add(const RefreshTodosEvent());
                         },
                         color: theme.colorScheme.secondary,
-                        child: SingleChildScrollView(
-                          child: Column(
-                            children: [
-                              // Beautiful header with gradient
-                              _todosHeaderWdiget(theme),
-                              ListView.builder(
-                                shrinkWrap: true,
-                                physics: const NeverScrollableScrollPhysics(),
-                                padding:
-                                    const EdgeInsets.fromLTRB(16, 8, 16, 16),
-                                itemCount: state.todos.length,
-                                itemBuilder: (context, index) {
-                                  final todo = state.todos[index];
-                                  return TodoCard(
-                                    todo: todo,
-                                    onTap: () {
-                                      // Handle todo tap
-                                    },
-                                    onCompletedChanged: (value) {
-                                      // Handle todo completion toggle
-                                      // You can add an event to update todo completion
-                                    },
-                                  );
+                        child: CustomScrollView(
+                          controller: _scrollController,
+                          slivers: [
+                            SliverToBoxAdapter(
+                              child: _todosHeaderWidget(theme),
+                            ),
+                            SliverList(
+                              delegate: SliverChildBuilderDelegate(
+                                (context, index) {
+                                  if (index < state.todos.length) {
+                                    final todo = state.todos[index];
+                                    return Padding(
+                                      padding: const EdgeInsets.fromLTRB(
+                                          16, 0, 16, 8),
+                                      child: TodoCard(
+                                        todo: todo,
+                                        onTap: () {
+                                          // Handle todo tap
+                                        },
+                                        onCompletedChanged: (value) {
+                                          // Handle todo completion toggle
+                                          // You can add an event to update todo completion
+                                        },
+                                      ),
+                                    );
+                                  } else {
+                                    // Show loading indicator at the bottom
+                                    return Container(
+                                      padding: const EdgeInsets.all(16),
+                                      child: Center(
+                                        child: state.isLoadingMore
+                                            ? const CircularProgressIndicator()
+                                            : const SizedBox.shrink(),
+                                      ),
+                                    );
+                                  }
                                 },
+                                childCount: state.todos.length +
+                                    (state.isLoadingMore ? 1 : 0),
                               ),
-                            ],
-                          ),
+                            ),
+                            // Add some bottom padding
+                            const SliverToBoxAdapter(
+                              child: SizedBox(height: 16),
+                            ),
+                          ],
                         ),
                       ),
                     ),
@@ -227,7 +251,7 @@ class _TodosTabState extends State<TodosTab> {
     );
   }
 
-  Container _todosHeaderWdiget(ThemeData theme) {
+  Container _todosHeaderWidget(ThemeData theme) {
     return Container(
       padding: const EdgeInsets.fromLTRB(20, 16, 20, 12),
       child: Row(

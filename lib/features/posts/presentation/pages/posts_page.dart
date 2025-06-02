@@ -31,7 +31,7 @@ class _PostsPageState extends State<PostsPage> with TickerProviderStateMixin {
     );
 
     // Load posts and start animation
-    context.read<PostsBloc>().add(const LoadAllPostsEvent());
+    context.read<PostsBloc>().add(const LoadInitialPostsEvent());
     _animationController.forward();
   }
 
@@ -361,7 +361,7 @@ class _PostsPageState extends State<PostsPage> with TickerProviderStateMixin {
                       onPressed: () {
                         context
                             .read<PostsBloc>()
-                            .add(const LoadAllPostsEvent());
+                            .add(const RefreshPostsEvent());
                       },
                       icon: const Icon(Icons.refresh_rounded),
                       label: const Text('Retry'),
