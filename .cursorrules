@@ -1,0 +1,190 @@
+# Flutter Bloc Guidelines (Without Freezed)
+
+## 🧠 State Management (Bloc/Cubit)
+
+### General Principles
+- Use **Cubit** for simple UI state (e.g., toggles, filters).
+- Use **Bloc** for complex logic involving multiple events.
+- Prefer single `State` classes with `copyWith` methods instead of Freezed.
+- Always keep Bloc/Cubit classes focused—extract logic into services/helpers.
+
+### State Class (Example)
+```dart
+class CounterState {
+  final int count;
+  final bool isLoading;
+  final String? error;
+
+  const CounterState({
+    required this.count,
+    this.isLoading = false,
+    this.error,
+  });
+
+  CounterState copyWith({
+    int? count,
+    bool? isLoading,
+    String? error,
+  }) {
+    return CounterState(
+      count: count ?? this.count,
+      isLoading: isLoading ?? this.isLoading,
+      error: error ?? this.error,
+    );
+  }
+}
+```
+
+### Bloc Best Practices
+- Always initialize the state in the constructor.
+- Avoid unnecessary rebuilds by selecting specific slices of state.
+- Use `BlocBuilder` for building UI and `BlocListener` for side-effects.
+- Use descriptive event names: `LoadUserProfile`, `SubmitForm`, etc.
+- Handle error and loading states explicitly inside Bloc logic.
+
+## 📦 File Structure
+```
+lib/
+└── core/
+    ├── config/               # Global configs (environment, constants, secrets)
+    ├── errors/               # Global error classes/exceptions
+    ├── platform/             # Platform-specific integrations (native channels)
+    ├── router/               # GoRouter or other navigation setup
+    ├── theme/                # ThemeData, color schemes, text styles
+    ├── usecases/             # (Optional) Global use cases that span multiple features
+    └── utils/                # Helpers, extensions, converters, formatters
+
+└── features/
+    ├── authentication/
+    │   ├── data/
+    │   │   ├── datasources/  # Remote/local data fetch
+    │   │   ├── models/       # DTOs or raw data structures
+    │   │   └── repositories/ # Repository implementations
+    │   ├── domain/
+    │   │   ├── entities/     # Core business objects
+    │   │   └── repositories/ # Abstract repository contracts
+    │   ├── presentation/
+    │   │   ├── blocs/        # Cubit/Bloc classes for Auth
+    │   │   ├── pages/        # Screens for login, register, forgot password
+    │   │   └── widgets/      # Reusable UI components
+    │   └── usecases/         # Business logic for auth flow
+    ├── home/
+    │   ├── data/
+    │   ├── domain/
+    │   ├── presentation/
+    │   └── usecases/
+    ├── recipe/
+    │   ├── data/
+    │   │   ├── datasources/
+    │   │   ├── models/
+    │   │   └── repositories/
+    │   ├── domain/
+    │   │   ├── entities/
+    │   │   └── repositories/
+    │   ├── presentation/
+    │   │   ├── blocs/        # e.g. RecipeBloc, RecipeCubit
+    │   │   ├── pages/        # e.g. RecipeListPage, RecipeDetailPage
+    │   │   └── widgets/      # e.g. RecipeCard, IngredientInput
+    │   └── usecases/         # Recipe CRUD logic, generation, etc.
+    ├── settings/
+    │   ├── data/
+    │   ├── domain/
+    │   ├── presentation/
+    │   └── usecases/
+    └── ... more features ...
+    
+└── shared/
+    ├── services/             # Reusable cross-feature services (e.g., analytics, push notifications)
+    ├── widgets/              # Reusable UI components used in multiple features
+    └── packages/             # Sub-packages or modules for separation of concerns (optional)
+└── bootstrap.dart      # inisiliztion separation 
+└── main.dart                 # Entry point of the application
+
+```
+
+## 🧱 Reusable Widgets Guidelines
+- Create modular, composable UI components.
+- Use `@immutable` stateless widgets when possible.
+- Separate UI logic into smaller widgets with customization via parameters.
+- Make all widgets configurable and styled via `ThemeData`.
+- Prefer `extension` methods or `Theme.of(context).x` for dynamic theming.
+
+### Example Themed Widget
+```dart
+class AppButton extends StatelessWidget {
+  final String label;
+  final VoidCallback onPressed;
+  final bool isLoading;
+
+  const AppButton({
+    required this.label,
+    required this.onPressed,
+    this.isLoading = false,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    return ElevatedButton(
+      style: ElevatedButton.styleFrom(
+        backgroundColor: theme.colorScheme.primary,
+      ),
+      onPressed: isLoading ? null : onPressed,
+      child: isLoading
+          ? const CircularProgressIndicator()
+          : Text(label, style: theme.textTheme.labelLarge),
+    );
+  }
+}
+```
+
+## 🔒 Firebase Integration Best Practices
+- Use Firebase Auth for sign-in, sign-up, password reset.
+- Store structured, normalized data in Firestore.
+- Use `createdAt`, `updatedAt`, and `isDeleted` fields.
+- Secure your Firestore rules by user roles and permissions.
+- Use Firebase Storage for media and Firebase Analytics for tracking.
+
+## ⚙️ Theming & Styling
+- Define all colors, spacings, text styles in `ThemeData`.
+- Prefer `Theme.of(context).textTheme.titleLarge` over deprecated styles.
+- Support dark/light themes via `ThemeMode.system`.
+- Use `MediaQuery`/`LayoutBuilder` for responsiveness.
+
+## 📈 Performance
+- Use `const` constructors as much as possible.
+- Use `ListView.builder` for long lists.
+- Optimize Firebase queries: index fields, paginate results.
+- Use `cached_network_image` for remote images.
+
+## 🧪 Testing
+- Write unit tests for Cubits and Blocs.
+- Use `mocktail` or `mockito` for dependencies.
+- Widget test reusable widgets.
+
+## 🔁 Navigation
+- Use `GoRouter` or `auto_route`.
+- Handle deep links with custom routes.
+- Keep routes organized per feature.
+
+## 📦 Code Generation
+- Avoid `freezed`, prefer manually written copyWith and equality.
+- Use `json_serializable` for models.
+- Run:
+```bash
+flutter pub run build_runner build --delete-conflicting-outputs
+```
+
+## 🔧 Miscellaneous
+- Use `log()` over `print()` for debugging.
+- Use `BlocObserver` to log transitions.
+- Follow Dart style guide (80 char line limit, trailing commas).
+- Create enums using `@JsonValue()` if storing in Firestore.
+
+## 📝 Documentation
+- Add inline comments for non-obvious logic.
+- Document business logic flows in bloc files.
+- Keep README.md and codebase docs up to date.
+
+---
+Follow these principles for building high-quality, production-ready Flutter apps using Bloc and Firebase without Freezed. 
