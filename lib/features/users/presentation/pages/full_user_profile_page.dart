@@ -5,6 +5,7 @@ import '../../../../core/router/app_router.dart';
 import '../../domain/repositories/user_repository.dart';
 import '../blocs/user_profile_cubit.dart';
 import '../../../../shared/widgets/todo_card.dart';
+import '../../../../shared/widgets/profile_todo_tile.dart';
 import '../../../../shared/widgets/loading_indicator.dart';
 import '../../../../shared/widgets/floating_scroll_buttons.dart';
 
@@ -897,8 +898,9 @@ class _FullUserProfileViewState extends State<_FullUserProfileView>
         itemCount: state.todos.length,
         itemBuilder: (context, index) {
           final todo = state.todos[index];
-          return TodoCard(
+          return ProfileTodoTile(
             todo: todo,
+            margin: const EdgeInsets.only(bottom: 12),
           );
         },
       ),

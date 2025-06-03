@@ -3,6 +3,7 @@ import 'package:objectbox/objectbox.dart';
 import '../../features/users/data/models/user_entity.dart';
 import '../../features/users/data/models/post_entity.dart';
 import '../../features/users/data/models/todo_entity.dart';
+import '../../features/posts/data/models/my_post_entity.dart';
 import '../../objectbox.g.dart'; // Generated file
 
 /// ObjectBox service for managing the database
@@ -14,11 +15,13 @@ class ObjectBoxService {
   late final Box<UserEntity> _userBox;
   late final Box<PostEntity> _postBox;
   late final Box<TodoEntity> _todoBox;
+  late final Box<MyPostEntity> _myPostBox;
 
   ObjectBoxService._create(this._store) {
     _userBox = Box<UserEntity>(_store);
     _postBox = Box<PostEntity>(_store);
     _todoBox = Box<TodoEntity>(_store);
+    _myPostBox = Box<MyPostEntity>(_store);
   }
 
   /// Create ObjectBox store instance
@@ -43,6 +46,7 @@ class ObjectBoxService {
   Box<UserEntity> get userBox => _userBox;
   Box<PostEntity> get postBox => _postBox;
   Box<TodoEntity> get todoBox => _todoBox;
+  Box<MyPostEntity> get myPostBox => _myPostBox;
 
   /// Clear all data (useful for testing or reset)
   Future<void> clearAllData() async {
@@ -50,9 +54,23 @@ class ObjectBoxService {
       _userBox.removeAll();
       _postBox.removeAll();
       _todoBox.removeAll();
+      // _myPostBox.removeAll();
       log('All ObjectBox data cleared');
     } catch (e) {
       log('Error clearing ObjectBox data: $e');
+    }
+  }
+
+  /// Clear only remote synced data (keeps user-created posts)
+  Future<void> clearSyncedData() async {
+    try {
+      _userBox.removeAll();
+      _postBox.removeAll();
+      _todoBox.removeAll();
+      // Don't clear myPostBox - these are user's personal posts
+      log('Synced ObjectBox data cleared (keeping user posts)');
+    } catch (e) {
+      log('Error clearing synced ObjectBox data: $e');
     }
   }
 
@@ -68,6 +86,7 @@ class ObjectBoxService {
       'users_count': _userBox.count(),
       'posts_count': _postBox.count(),
       'todos_count': _todoBox.count(),
+      'my_posts_count': _myPostBox.count(),
     };
   }
 }

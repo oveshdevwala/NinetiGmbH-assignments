@@ -55,7 +55,23 @@ class _PostsTabState extends State<PostsTab>
   }
 
   void _onScroll() {
+    if (!mounted) return;
+
+    final bloc = context.read<PostsBloc>();
+    final state = bloc.state;
+
+    // Don't trigger if already loading more or reached max
+    if (state.isLoadingMore || state.hasReachedMax) {
+      return;
+    }
+
     if (_isBottom) {
+      // Debug log to check if pagination is triggered
+      print('PostsTab: Pagination triggered - loading more posts');
+      print('PostsTab: Current posts count: ${state.posts.length}');
+      print('PostsTab: Current page: ${state.currentPage}');
+      print('PostsTab: Has reached max: ${state.hasReachedMax}');
+
       context.read<PostsBloc>().add(const LoadMorePostsEvent());
     }
   }
@@ -63,9 +79,25 @@ class _PostsTabState extends State<PostsTab>
   bool get _isBottom {
     if (_scrollController == null || !_scrollController!.hasClients)
       return false;
-    final maxScroll = _scrollController!.position.maxScrollExtent;
-    final currentScroll = _scrollController!.offset;
-    return currentScroll >= (maxScroll * 0.9); // Load more when 90% scrolled
+
+    final position = _scrollController!.position;
+    final maxScroll = position.maxScrollExtent;
+    final currentScroll = position.pixels;
+
+    // More sensitive scroll detection - trigger at 80% scroll
+    final threshold = maxScroll * 0.8;
+    final shouldLoadMore = currentScroll >= threshold;
+
+    // Debug log for scroll position (only when close to bottom)
+    if (currentScroll >= maxScroll * 0.7) {
+      print(
+          'PostsTab: Scroll position: ${currentScroll.toStringAsFixed(0)} / ${maxScroll.toStringAsFixed(0)} (${(currentScroll / maxScroll * 100).toStringAsFixed(1)}%)');
+      if (shouldLoadMore) {
+        print('PostsTab: ✅ Threshold reached for pagination');
+      }
+    }
+
+    return shouldLoadMore;
   }
 
   @override
@@ -175,17 +207,47 @@ class _PostsTabState extends State<PostsTab>
                                   );
                                 } else if (index == state.posts.length &&
                                     state.isLoadingMore) {
+                                  // Enhanced loading indicator for pagination
                                   return Container(
-                                    height: 140,
+                                    padding: const EdgeInsets.all(24),
                                     margin: const EdgeInsets.fromLTRB(
-                                        16, 0, 16, 12),
+                                        16, 8, 16, 16),
                                     decoration: BoxDecoration(
                                       color: colorScheme.surfaceContainerHighest
-                                          .withOpacity(0.3),
+                                          .withOpacity(0.5),
                                       borderRadius: BorderRadius.circular(16),
+                                      border: Border.all(
+                                        color: colorScheme.primary
+                                            .withOpacity(0.2),
+                                        width: 1,
+                                      ),
                                     ),
-                                    child: const LoadingIndicator(
-                                        useShimmer: true),
+                                    child: Column(
+                                      mainAxisSize: MainAxisSize.min,
+                                      children: [
+                                        SizedBox(
+                                          width: 24,
+                                          height: 24,
+                                          child: CircularProgressIndicator(
+                                            strokeWidth: 2.5,
+                                            valueColor:
+                                                AlwaysStoppedAnimation<Color>(
+                                              colorScheme.primary,
+                                            ),
+                                          ),
+                                        ),
+                                        const SizedBox(height: 12),
+                                        Text(
+                                          'Loading more posts...',
+                                          style: theme.textTheme.bodyMedium
+                                              ?.copyWith(
+                                            color: colorScheme.onSurface
+                                                .withOpacity(0.7),
+                                            fontWeight: FontWeight.w500,
+                                          ),
+                                        ),
+                                      ],
+                                    ),
                                   );
                                 }
                                 return null;
@@ -194,10 +256,83 @@ class _PostsTabState extends State<PostsTab>
                                   (state.isLoadingMore ? 1 : 0),
                             ),
                           ),
-                          // Add some bottom padding
-                          const SliverToBoxAdapter(
-                            child: SizedBox(
-                                height: 80), // Extra space for floating buttons
+                          // Pagination footer
+                          SliverToBoxAdapter(
+                            child: BlocBuilder<PostsBloc, PostsState>(
+                              builder: (context, state) {
+                                if (state.hasReachedMax &&
+                                    state.posts.isNotEmpty) {
+                                  return Container(
+                                    padding: const EdgeInsets.all(24),
+                                    margin: const EdgeInsets.fromLTRB(
+                                        16, 8, 16, 16),
+                                    decoration: BoxDecoration(
+                                      color: colorScheme.surfaceContainerHighest
+                                          .withOpacity(0.3),
+                                      borderRadius: BorderRadius.circular(16),
+                                      border: Border.all(
+                                        color: colorScheme.outline
+                                            .withOpacity(0.2),
+                                        width: 1,
+                                      ),
+                                    ),
+                                    child: Row(
+                                      mainAxisAlignment:
+                                          MainAxisAlignment.center,
+                                      children: [
+                                        Icon(
+                                          Icons.check_circle_outline,
+                                          size: 20,
+                                          color: colorScheme.primary,
+                                        ),
+                                        const SizedBox(width: 8),
+                                        Text(
+                                          'You\'ve reached the end!',
+                                          style: theme.textTheme.bodyMedium
+                                              ?.copyWith(
+                                            color: colorScheme.onSurface
+                                                .withOpacity(0.7),
+                                            fontWeight: FontWeight.w500,
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  );
+                                } else if (!state.isLoadingMore &&
+                                    state.posts.length >= 30) {
+                                  // Show "scroll for more" hint only if we have a substantial number of posts
+                                  return Container(
+                                    padding: const EdgeInsets.all(16),
+                                    margin: const EdgeInsets.fromLTRB(
+                                        16, 8, 16, 16),
+                                    child: Row(
+                                      mainAxisAlignment:
+                                          MainAxisAlignment.center,
+                                      children: [
+                                        Icon(
+                                          Icons.keyboard_arrow_down,
+                                          size: 20,
+                                          color: colorScheme.primary
+                                              .withOpacity(0.6),
+                                        ),
+                                        const SizedBox(width: 8),
+                                        Text(
+                                          'Scroll down for more posts',
+                                          style: theme.textTheme.bodySmall
+                                              ?.copyWith(
+                                            color: colorScheme.onSurface
+                                                .withOpacity(0.5),
+                                            fontWeight: FontWeight.w400,
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  );
+                                }
+                                return const SizedBox(
+                                    height: 80); // Default spacing
+                              },
+                            ),
                           ),
                         ],
                       ),

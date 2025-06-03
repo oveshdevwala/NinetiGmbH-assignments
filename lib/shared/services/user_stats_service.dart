@@ -6,6 +6,8 @@ class UserStatsService {
 
   // Cache for user stats to avoid repeated API calls
   final Map<int, UserStats> _statsCache = {};
+  // Track which users are currently being loaded
+  final Set<int> _loadingStats = {};
 
   UserStatsService({required UserRepository userRepository})
       : _userRepository = userRepository;
@@ -16,6 +18,13 @@ class UserStatsService {
     if (_statsCache.containsKey(userId)) {
       return _statsCache[userId];
     }
+
+    // Don't fetch if already loading
+    if (_loadingStats.contains(userId)) {
+      return null;
+    }
+
+    _loadingStats.add(userId);
 
     try {
       // Fetch posts and todos for the user
@@ -48,6 +57,8 @@ class UserStatsService {
     } catch (e) {
       log('Error fetching stats for user $userId: $e');
       return null;
+    } finally {
+      _loadingStats.remove(userId);
     }
   }
 
@@ -55,11 +66,28 @@ class UserStatsService {
   Future<Map<int, UserStats>> getUsersStats(List<int> userIds) async {
     final Map<int, UserStats> results = {};
 
+    // Filter out already cached and loading users
+    final usersToFetch = userIds
+        .where(
+            (id) => !_statsCache.containsKey(id) && !_loadingStats.contains(id))
+        .toList();
+
+    if (usersToFetch.isEmpty) {
+      // Return cached results
+      for (final id in userIds) {
+        final cached = _statsCache[id];
+        if (cached != null) {
+          results[id] = cached;
+        }
+      }
+      return results;
+    }
+
     // Process in batches to avoid overwhelming the API
     const batchSize = 5;
 
-    for (int i = 0; i < userIds.length; i += batchSize) {
-      final batch = userIds.skip(i).take(batchSize).toList();
+    for (int i = 0; i < usersToFetch.length; i += batchSize) {
+      final batch = usersToFetch.skip(i).take(batchSize).toList();
 
       // Fetch stats for this batch in parallel
       final futures = batch.map((userId) => getUserStats(userId));
@@ -75,7 +103,7 @@ class UserStatsService {
       }
 
       // Small delay between batches to be nice to the API
-      if (i + batchSize < userIds.length) {
+      if (i + batchSize < usersToFetch.length) {
         await Future.delayed(const Duration(milliseconds: 100));
       }
     }
@@ -86,16 +114,28 @@ class UserStatsService {
   /// Clear stats cache
   void clearCache() {
     _statsCache.clear();
+    _loadingStats.clear();
   }
 
   /// Clear stats for a specific user
   void clearUserStats(int userId) {
     _statsCache.remove(userId);
+    _loadingStats.remove(userId);
   }
 
   /// Get cached stats without fetching
   UserStats? getCachedStats(int userId) {
     return _statsCache[userId];
+  }
+
+  /// Get stats for a user (cached version for UI)
+  UserStats? getStatsForUser(int userId) {
+    return _statsCache[userId];
+  }
+
+  /// Check if stats are being loaded for a user
+  bool isLoadingStats(int userId) {
+    return _loadingStats.contains(userId);
   }
 
   /// Check if stats are cached and fresh (less than 5 minutes old)

@@ -92,6 +92,43 @@ class PostRemoteDataSourceImpl implements PostRemoteDataSource {
     int limit = 30,
     int skip = 0,
   }) async {
-    return getAllPosts(limit: limit, skip: skip);
+    try {
+      print(
+          'PostRemoteDataSource: Fetching paginated posts - limit: $limit, skip: $skip');
+
+      final response = await dio.get('/posts', queryParameters: {
+        'limit': limit,
+        'skip': skip,
+      });
+
+      if (response.statusCode == 200) {
+        final data = response.data as DataMap;
+        final posts = data['posts'] as List<dynamic>;
+        final postModels =
+            posts.map((post) => PostModel.fromJson(post as DataMap)).toList();
+
+        print(
+            'PostRemoteDataSource: Successfully fetched ${postModels.length} paginated posts');
+        return postModels;
+      } else {
+        throw ServerException(
+          message: 'Failed to fetch paginated posts',
+          statusCode: response.statusCode!,
+        );
+      }
+    } on DioException catch (e) {
+      print(
+          'PostRemoteDataSource: Network error during pagination: ${e.message}');
+      throw ServerException(
+        message: e.message ?? 'Network error occurred during pagination',
+        statusCode: e.response?.statusCode ?? 500,
+      );
+    } catch (e) {
+      print('PostRemoteDataSource: Unexpected error during pagination: $e');
+      throw ServerException(
+        message: 'Unexpected error occurred during pagination: $e',
+        statusCode: 500,
+      );
+    }
   }
 }

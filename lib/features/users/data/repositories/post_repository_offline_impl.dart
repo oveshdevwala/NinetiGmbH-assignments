@@ -96,8 +96,69 @@ class PostRepositoryOfflineImpl implements PostRepository {
     int limit = 30,
     int skip = 0,
   }) async {
-    // For now, use the same implementation as getAllPosts
-    return getAllPosts(limit: limit, skip: skip);
+    try {
+      log('PostRepository: Pagination requested - limit: $limit, skip: $skip');
+
+      // For pagination, we need to fetch from remote to get more data
+      final isConnected = await connectivityService.isConnected;
+      if (isConnected) {
+        log('PostRepository: Connected - fetching paginated posts from remote');
+        try {
+          final remotePosts = await remoteDataSource.getPostsPaginated(
+            limit: limit,
+            skip: skip,
+          );
+
+          // Save new posts to local storage
+          await localDataSource.savePosts(remotePosts);
+          log('PostRepository: Fetched and saved ${remotePosts.length} posts via pagination');
+
+          return Right(remotePosts);
+        } catch (e) {
+          log('PostRepository: Error fetching paginated posts from remote: $e');
+          // Fall back to local data with pagination
+          return _getLocalPostsPaginated(limit, skip);
+        }
+      } else {
+        log('PostRepository: Offline - using local paginated posts');
+        // If offline, get paginated data from local storage
+        return _getLocalPostsPaginated(limit, skip);
+      }
+    } catch (e) {
+      log('Error in getPostsPaginated: $e');
+      return const Left(CacheFailure('Failed to load paginated posts'));
+    }
+  }
+
+  /// Get paginated posts from local storage
+  Future<Either<Failure, List<Post>>> _getLocalPostsPaginated(
+    int limit,
+    int skip,
+  ) async {
+    try {
+      final allLocalPosts = await localDataSource.getAllPosts();
+
+      // Apply pagination to local data
+      final startIndex = skip;
+      final endIndex = skip + limit;
+
+      if (startIndex >= allLocalPosts.length) {
+        // No more data available
+        log('PostRepository: No more local posts available (skip: $skip, total: ${allLocalPosts.length})');
+        return const Right([]);
+      }
+
+      final paginatedPosts = allLocalPosts.sublist(
+        startIndex,
+        endIndex > allLocalPosts.length ? allLocalPosts.length : endIndex,
+      );
+
+      log('PostRepository: Returning ${paginatedPosts.length} local posts from pagination');
+      return Right(paginatedPosts);
+    } catch (e) {
+      log('Error getting paginated local posts: $e');
+      return const Left(CacheFailure('Failed to get paginated local posts'));
+    }
   }
 
   /// Get post by ID

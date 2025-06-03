@@ -14,21 +14,30 @@ import '../../../features/users/presentation/pages/full_user_profile_page.dart';
 import '../../../features/users/presentation/pages/profile_page.dart';
 import '../../../features/users/presentation/pages/users_list_page.dart';
 import '../../../features/posts/presentation/pages/post_detail_page.dart';
+import '../../../features/posts/presentation/pages/my_posts_page.dart';
+import '../../../features/posts/presentation/pages/create_edit_post_page.dart';
 
 // Domain entities
 import '../../../features/users/domain/entities/post.dart';
+import '../../../features/posts/domain/entities/my_post.dart';
 
 /// Route names used for navigation
 class AppRoutes {
   // Main tab routes
   static const String home = 'home';
   static const String users = 'users';
+  static const String myPosts = 'my-posts';
   static const String profile = 'profile';
 
   // Detail routes
   static const String postDetail = 'post-detail';
   static const String userProfile = 'user-profile';
   static const String fullUserProfile = 'full-user-profile';
+
+  // My Posts routes
+  static const String myPostDetail = 'my-post-detail';
+  static const String createMyPost = 'create-my-post';
+  static const String editMyPost = 'edit-my-post';
 }
 
 /// Path names used for routing
@@ -36,12 +45,18 @@ class AppPaths {
   // Main tab paths
   static const String home = '/home';
   static const String users = '/users';
+  static const String myPosts = '/my-posts';
   static const String profile = '/profile';
 
   // Detail paths
   static const String postDetail = '/post-detail';
   static const String userProfile = '/user-profile';
   static const String fullUserProfile = '/full-user-profile';
+
+  // My Posts paths
+  static const String myPostDetail = '/my-posts/detail';
+  static const String createMyPost = '/my-posts/create';
+  static const String editMyPost = '/my-posts/edit';
 
   /// Get path for a navigation tab
   static String getPathForTab(NavigationTab tab) {
@@ -50,6 +65,8 @@ class AppPaths {
         return home;
       case NavigationTab.users:
         return users;
+      case NavigationTab.myPosts:
+        return myPosts;
       case NavigationTab.profile:
         return profile;
     }
@@ -109,8 +126,10 @@ class AppRouter {
 
   static final _shellNavigatorKeyHome =
       GlobalKey<NavigatorState>(debugLabel: 'shellHome');
-  static final _shellNavigatorKeyPosts =
-      GlobalKey<NavigatorState>(debugLabel: 'shellPosts');
+  static final _shellNavigatorKeyUsers =
+      GlobalKey<NavigatorState>(debugLabel: 'shellUsers');
+  static final _shellNavigatorKeyMyPosts =
+      GlobalKey<NavigatorState>(debugLabel: 'shellMyPosts');
   static final _shellNavigatorKeyProfile =
       GlobalKey<NavigatorState>(debugLabel: 'shellProfile');
 
@@ -181,6 +200,78 @@ class AppRouter {
         },
       ),
 
+      // My Post Detail - uses root navigator for full screen
+      GoRoute(
+        path: '${AppPaths.myPostDetail}/:postId',
+        name: AppRoutes.myPostDetail,
+        parentNavigatorKey: _rootNavigatorKey,
+        pageBuilder: (context, state) {
+          final post = state.extra as MyPost?;
+          final postIdParam = state.pathParameters['postId'];
+          final postId = int.tryParse(postIdParam ?? '');
+
+          if (postId == null || post == null) {
+            return state.toFadeTransitionPage(
+              child: Scaffold(
+                appBar: AppBar(
+                  title: const Text('Error'),
+                  leading: IconButton(
+                    icon: const Icon(Icons.arrow_back),
+                    onPressed: () => context.go(AppPaths.myPosts),
+                  ),
+                ),
+                body: const Center(child: Text('Invalid post ID')),
+              ),
+            );
+          }
+
+          return state.toRightToLeftPage(
+            child: CreateEditPostPage(post: post),
+          );
+        },
+      ),
+
+      // Create My Post - uses root navigator for full screen
+      GoRoute(
+        path: AppPaths.createMyPost,
+        name: AppRoutes.createMyPost,
+        parentNavigatorKey: _rootNavigatorKey,
+        pageBuilder: (context, state) => state.toRightToLeftPage(
+          child: const CreateEditPostPage(),
+        ),
+      ),
+
+      // Edit My Post - uses root navigator for full screen
+      GoRoute(
+        path: '${AppPaths.editMyPost}/:postId',
+        name: AppRoutes.editMyPost,
+        parentNavigatorKey: _rootNavigatorKey,
+        pageBuilder: (context, state) {
+          final post = state.extra as MyPost?;
+          final postIdParam = state.pathParameters['postId'];
+          final postId = int.tryParse(postIdParam ?? '');
+
+          if (postId == null || post == null) {
+            return state.toFadeTransitionPage(
+              child: Scaffold(
+                appBar: AppBar(
+                  title: const Text('Error'),
+                  leading: IconButton(
+                    icon: const Icon(Icons.arrow_back),
+                    onPressed: () => context.go(AppPaths.myPosts),
+                  ),
+                ),
+                body: const Center(child: Text('Post not found')),
+              ),
+            );
+          }
+
+          return state.toRightToLeftPage(
+            child: CreateEditPostPage(post: post),
+          );
+        },
+      ),
+
       // Shell route for main app with bottom navigation
       StatefulShellRoute.indexedStack(
         builder: (context, state, navigationShell) {
@@ -201,15 +292,29 @@ class AppRouter {
             ],
           ),
 
-          // Posts branch
+          // Users branch
           StatefulShellBranch(
-            navigatorKey: _shellNavigatorKeyPosts,
+            navigatorKey: _shellNavigatorKeyUsers,
             routes: [
               GoRoute(
                 path: AppPaths.users,
                 name: AppRoutes.users,
                 pageBuilder: (context, state) => state.toNoTransitionPage(
                   child: const UsersListPage(),
+                ),
+              ),
+            ],
+          ),
+
+          // My Posts branch
+          StatefulShellBranch(
+            navigatorKey: _shellNavigatorKeyMyPosts,
+            routes: [
+              GoRoute(
+                path: AppPaths.myPosts,
+                name: AppRoutes.myPosts,
+                pageBuilder: (context, state) => state.toNoTransitionPage(
+                  child: const MyPostsPage(),
                 ),
               ),
             ],

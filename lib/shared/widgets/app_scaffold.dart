@@ -33,6 +33,11 @@ class AppScaffold extends StatelessWidget {
             label: 'Users',
           ),
           BottomNavigationBarItem(
+            icon: Icon(Icons.post_add_outlined),
+            activeIcon: Icon(Icons.post_add),
+            label: 'My Posts',
+          ),
+          BottomNavigationBarItem(
             icon: Icon(Icons.person_outline),
             activeIcon: Icon(Icons.person),
             label: 'Profile',
@@ -54,6 +59,7 @@ class AppScaffold extends StatelessWidget {
 enum NavigationTab {
   home,
   users,
+  myPosts,
   profile,
 }
 
@@ -65,6 +71,8 @@ extension NavigationTabExtension on NavigationTab {
         return '/home';
       case NavigationTab.users:
         return '/users';
+      case NavigationTab.myPosts:
+        return '/my-posts';
       case NavigationTab.profile:
         return '/profile';
     }
@@ -76,6 +84,8 @@ extension NavigationTabExtension on NavigationTab {
         return 'home';
       case NavigationTab.users:
         return 'users';
+      case NavigationTab.myPosts:
+        return 'my-posts';
       case NavigationTab.profile:
         return 'profile';
     }

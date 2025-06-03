@@ -137,24 +137,24 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
           ],
         ),
       ),
-      floatingActionButton: FloatingActionButton.extended(
-        onPressed: () {
-          // Demo navigation to post detail page
-          const demoPost = Post(
-            id: 1,
-            title: 'Demo Post Title',
-            body:
-                'This is a demo post body with some content to demonstrate the post detail page functionality.',
-            userId: 1,
-            tags: ['demo', 'flutter', 'example'],
-            reactions: PostReactions(likes: 42, dislikes: 3),
-            views: 1234,
-          );
-          context.goToPostDetail(demoPost);
-        },
-        icon: const Icon(Icons.preview),
-        label: const Text('Demo Post'),
-      ),
+      // floatingActionButton: FloatingActionButton.extended(
+      //   onPressed: () {
+      //     // Demo navigation to post detail page
+      //     const demoPost = Post(
+      //       id: 1,
+      //       title: 'Demo Post Title',
+      //       body:
+      //           'This is a demo post body with some content to demonstrate the post detail page functionality.',
+      //       userId: 1,
+      //       tags: ['demo', 'flutter', 'example'],
+      //       reactions: PostReactions(likes: 42, dislikes: 3),
+      //       views: 1234,
+      //     );
+      //     context.goToPostDetail(demoPost);
+      //   },
+      //   icon: const Icon(Icons.preview),
+      //   label: const Text('Demo Post'),
+      // ),
     );
   }
 

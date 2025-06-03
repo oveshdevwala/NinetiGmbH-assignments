@@ -11,6 +11,7 @@ import '../widgets/todo_card.dart';
 import '../../../../shared/widgets/user_avatar.dart';
 import '../../../../shared/widgets/loading_indicator.dart';
 import '../../../../shared/widgets/floating_scroll_buttons.dart';
+import '../../../../shared/widgets/profile_todo_tile.dart';
 
 class UserProfilePage extends StatefulWidget {
   final int userId;
@@ -777,7 +778,7 @@ class _UserProfilePageState extends State<UserProfilePage>
               return AnimatedContainer(
                 duration: Duration(milliseconds: 200 + (index * 50)),
                 curve: Curves.easeOutBack,
-                child: TodoCard(todo: todo),
+                child: ProfileTodoTile(todo: todo),
               );
             },
           ),

@@ -12,6 +12,7 @@ import 'core/router/app_router.dart';
 import 'shared/services/objectbox_service.dart';
 import 'shared/services/connectivity_service.dart';
 import 'shared/services/sync_service.dart';
+import 'shared/services/user_stats_service.dart';
 
 // Data Sources
 import 'features/users/data/datasources/user_remote_datasource.dart';
@@ -20,16 +21,19 @@ import 'features/users/data/datasources/post_remote_datasource.dart';
 import 'features/users/data/datasources/todo_remote_datasource.dart';
 import 'features/users/data/datasources/post_local_datasource.dart';
 import 'features/users/data/datasources/todo_local_datasource.dart';
+import 'features/posts/data/datasources/my_post_local_datasource.dart';
 
 // Repository Implementations
 import 'features/users/data/repositories/user_repository_offline_impl.dart';
 import 'features/users/data/repositories/post_repository_offline_impl.dart';
 import 'features/users/data/repositories/todo_repository_impl.dart';
+import 'features/posts/data/repositories/my_post_repository_impl.dart';
 
 // Domain Repositories
 import 'features/users/domain/repositories/user_repository.dart';
 import 'features/users/domain/repositories/post_repository.dart';
 import 'features/users/domain/repositories/todo_repository.dart';
+import 'features/posts/domain/repositories/my_post_repository.dart';
 
 // BLoCs and Cubits
 import 'features/users/presentation/blocs/users_cubit.dart';
@@ -38,6 +42,7 @@ import 'features/posts/presentation/blocs/posts_cubit.dart';
 import 'features/users/presentation/blocs/todos_bloc.dart';
 import 'features/users/presentation/blocs/posts_bloc.dart';
 import 'features/users/presentation/blocs/scroll_cubit.dart';
+import 'features/posts/presentation/blocs/my_posts_cubit.dart';
 
 class App extends StatelessWidget {
   final ObjectBoxService objectBoxService;
@@ -86,6 +91,11 @@ class App extends StatelessWidget {
         ),
         BlocProvider<ScrollCubit>(
           create: (context) => ScrollCubit(),
+        ),
+        BlocProvider<MyPostsCubit>(
+          create: (context) => MyPostsCubit(
+            repository: context.read<MyPostRepository>(),
+          ),
         ),
       ],
       child: PageStorage(
@@ -148,6 +158,9 @@ Future<void> bootstrap() async {
   final todoLocalDataSource = TodoLocalDataSourceImpl(
     todoBox: objectBoxService.todoBox,
   );
+  final myPostLocalDataSource = MyPostLocalDataSourceImpl(
+    myPostBox: objectBoxService.myPostBox,
+  );
 
   // Setup sync service
   final syncService = SyncService(
@@ -178,6 +191,10 @@ Future<void> bootstrap() async {
     remoteDataSource: todoRemoteDataSource,
   );
 
+  final myPostRepository = MyPostRepositoryImpl(
+    localDataSource: myPostLocalDataSource,
+  );
+
   runApp(
     MultiRepositoryProvider(
       providers: [
@@ -190,6 +207,9 @@ Future<void> bootstrap() async {
         RepositoryProvider<TodoRepository>(
           create: (context) => todoRepository,
         ),
+        RepositoryProvider<MyPostRepository>(
+          create: (context) => myPostRepository,
+        ),
         // Provide services for dependency injection
         RepositoryProvider<ObjectBoxService>(
           create: (context) => objectBoxService,
@@ -199,6 +219,11 @@ Future<void> bootstrap() async {
         ),
         RepositoryProvider<SyncService>(
           create: (context) => syncService,
+        ),
+        RepositoryProvider<UserStatsService>(
+          create: (context) => UserStatsService(
+            userRepository: userRepository,
+          ),
         ),
       ],
       child: App(

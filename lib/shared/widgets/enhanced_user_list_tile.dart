@@ -27,10 +27,10 @@ class EnhancedUserListTile extends StatelessWidget {
     final colorScheme = theme.colorScheme;
 
     return Container(
-      margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
+      margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
       decoration: BoxDecoration(
         color: colorScheme.surface,
-        borderRadius: BorderRadius.circular(20),
+        borderRadius: BorderRadius.circular(16),
         border: Border.all(
           color: colorScheme.outline.withOpacity(0.08),
           width: 1,
@@ -38,19 +38,19 @@ class EnhancedUserListTile extends StatelessWidget {
         boxShadow: [
           BoxShadow(
             color: colorScheme.shadow.withOpacity(0.04),
-            blurRadius: 12,
-            offset: const Offset(0, 4),
+            blurRadius: 8,
+            offset: const Offset(0, 2),
           ),
         ],
       ),
       child: Material(
         color: Colors.transparent,
-        borderRadius: BorderRadius.circular(20),
+        borderRadius: BorderRadius.circular(16),
         child: InkWell(
           onTap: onTap ?? () => context.go('/user-profile/${user.id}'),
-          borderRadius: BorderRadius.circular(20),
+          borderRadius: BorderRadius.circular(16),
           child: Padding(
-            padding: const EdgeInsets.all(20),
+            padding: const EdgeInsets.all(12),
             child: Column(
               children: [
                 // Main user info row
@@ -73,22 +73,22 @@ class EnhancedUserListTile extends StatelessWidget {
                                 end: Alignment.bottomRight,
                               ),
                             ),
-                            padding: const EdgeInsets.all(3),
+                            padding: const EdgeInsets.all(2),
                             child: CircleAvatar(
-                              radius: 25,
+                              radius: 18,
                               backgroundColor: colorScheme.primaryContainer,
                               child: ClipOval(
                                 child: CachedNetworkImage(
                                   imageUrl: user.image,
-                                  width: 45,
-                                  height: 45,
+                                  width: 32,
+                                  height: 32,
                                   fit: BoxFit.cover,
                                   placeholder: (context, url) => Container(
                                     color: colorScheme.primaryContainer,
                                     child: Icon(
                                       Icons.person,
                                       color: colorScheme.onPrimaryContainer,
-                                      size: 32,
+                                      size: 20,
                                     ),
                                   ),
                                   errorWidget: (context, url, error) =>
@@ -97,7 +97,7 @@ class EnhancedUserListTile extends StatelessWidget {
                                     child: Icon(
                                       Icons.person,
                                       color: colorScheme.onPrimaryContainer,
-                                      size: 32,
+                                      size: 20,
                                     ),
                                   ),
                                 ),
@@ -108,10 +108,10 @@ class EnhancedUserListTile extends StatelessWidget {
                         // Storage indicator
                         Positioned(
                           right: 0,
-                          bottom: 2,
+                          bottom: 0,
                           child: Container(
-                            width: 12,
-                            height: 12,
+                            width: 10,
+                            height: 10,
                             decoration: BoxDecoration(
                               shape: BoxShape.circle,
                               color: isInitialBatch
@@ -119,12 +119,12 @@ class EnhancedUserListTile extends StatelessWidget {
                                   : colorScheme.tertiary,
                               border: Border.all(
                                 color: colorScheme.surface,
-                                width: 2,
+                                width: 1.5,
                               ),
                             ),
                             child: Icon(
                               isInitialBatch ? Icons.storage : Icons.cloud,
-                              size: 10,
+                              size: 6,
                               color: colorScheme.surface,
                             ),
                           ),
@@ -132,7 +132,7 @@ class EnhancedUserListTile extends StatelessWidget {
                       ],
                     ),
 
-                    const SizedBox(width: 16),
+                    const SizedBox(width: 12),
 
                     // User details
                     Expanded(
@@ -142,31 +142,31 @@ class EnhancedUserListTile extends StatelessWidget {
                           // Name
                           Text(
                             user.fullName,
-                            style: theme.textTheme.titleLarge?.copyWith(
+                            style: theme.textTheme.titleMedium?.copyWith(
                               fontWeight: FontWeight.bold,
-                              fontSize: 14,
+                              fontSize: 13,
                               color: colorScheme.onSurface,
                             ),
                             maxLines: 1,
                             overflow: TextOverflow.ellipsis,
                           ),
-                          const SizedBox(height: 4),
+                          const SizedBox(height: 2),
 
                           // Username
                           Row(
                             children: [
                               Icon(
                                 Icons.alternate_email,
-                                size: 16,
+                                size: 12,
                                 color: colorScheme.primary,
                               ),
                               const SizedBox(width: 4),
                               Expanded(
                                 child: Text(
                                   user.username,
-                                  style: theme.textTheme.bodyMedium?.copyWith(
+                                  style: theme.textTheme.bodySmall?.copyWith(
                                     color: colorScheme.primary,
-                                    fontSize: 12,
+                                    fontSize: 11,
                                     fontWeight: FontWeight.w600,
                                   ),
                                   maxLines: 1,
@@ -175,57 +175,6 @@ class EnhancedUserListTile extends StatelessWidget {
                               ),
                             ],
                           ),
-                          const SizedBox(height: 4),
-
-                          // // Email
-                          // Row(
-                          //   children: [
-                          //     Icon(
-                          //       Icons.email_outlined,
-                          //       size: 14,
-                          //       color: colorScheme.onSurface.withOpacity(0.6),
-                          //     ),
-                          //     const SizedBox(width: 4),
-                          //     Expanded(
-                          //       child: Text(
-                          //         user.email,
-                          //         style: theme.textTheme.bodySmall?.copyWith(
-                          //           color:
-                          //               colorScheme.onSurface.withOpacity(0.7),
-                          //         ),
-                          //         maxLines: 1,
-                          //         overflow: TextOverflow.ellipsis,
-                          //       ),
-                          //     ),
-                          //   ],
-                          // ),
-
-                          // // Company info (if available)
-                          //   if (user.company != null) ...[
-                          //     const SizedBox(height: 6),
-                          //     Row(
-                          //       children: [
-                          //         Icon(
-                          //           Icons.business,
-                          //           size: 14,
-                          //           color: colorScheme.onSurface.withOpacity(0.6),
-                          //         ),
-                          //         const SizedBox(width: 4),
-                          //         Expanded(
-                          //           child: Text(
-                          //             '${user.company!.title} at ${user.company!.name}',
-                          //             style: theme.textTheme.bodySmall?.copyWith(
-                          //               color: colorScheme.onSurface
-                          //                   .withOpacity(0.6),
-                          //               fontWeight: FontWeight.w500,
-                          //             ),
-                          //             maxLines: 1,
-                          //             overflow: TextOverflow.ellipsis,
-                          //           ),
-                          //         ),
-                          //       ],
-                          //     ),
-                          // ],
                         ],
                       ),
                     ),
@@ -241,32 +190,33 @@ class EnhancedUserListTile extends StatelessWidget {
                           begin: Alignment.topLeft,
                           end: Alignment.bottomRight,
                         ),
-                        borderRadius: BorderRadius.circular(16),
+                        borderRadius: BorderRadius.circular(12),
                       ),
                       child: Material(
                         color: Colors.transparent,
                         child: InkWell(
-                          borderRadius: BorderRadius.circular(16),
+                          borderRadius: BorderRadius.circular(12),
                           onTap: () => context.go('/user-profile/${user.id}'),
                           child: Padding(
                             padding: const EdgeInsets.symmetric(
-                              horizontal: 16,
-                              vertical: 12,
+                              horizontal: 12,
+                              vertical: 8,
                             ),
                             child: Row(
                               mainAxisSize: MainAxisSize.min,
                               children: [
                                 Icon(
                                   Icons.person_outline,
-                                  size: 18,
+                                  size: 14,
                                   color: colorScheme.onPrimary,
                                 ),
-                                const SizedBox(width: 6),
+                                const SizedBox(width: 4),
                                 Text(
                                   'View',
-                                  style: theme.textTheme.bodyMedium?.copyWith(
+                                  style: theme.textTheme.bodySmall?.copyWith(
                                     color: colorScheme.onPrimary,
                                     fontWeight: FontWeight.w600,
+                                    fontSize: 11,
                                   ),
                                 ),
                               ],
@@ -278,15 +228,15 @@ class EnhancedUserListTile extends StatelessWidget {
                   ],
                 ),
 
-                const SizedBox(height: 16),
+                const SizedBox(height: 8),
 
                 // Stats row
                 Container(
                   padding:
-                      const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                      const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
                   decoration: BoxDecoration(
                     color: colorScheme.surfaceContainerHighest.withOpacity(0.5),
-                    borderRadius: BorderRadius.circular(16),
+                    borderRadius: BorderRadius.circular(12),
                   ),
                   child: Row(
                     children: [
@@ -305,7 +255,7 @@ class EnhancedUserListTile extends StatelessWidget {
                       // Divider
                       Container(
                         width: 1,
-                        height: 32,
+                        height: 20,
                         color: colorScheme.outline.withOpacity(0.2),
                       ),
 
@@ -324,7 +274,7 @@ class EnhancedUserListTile extends StatelessWidget {
                       // Divider
                       Container(
                         width: 1,
-                        height: 32,
+                        height: 20,
                         color: colorScheme.outline.withOpacity(0.2),
                       ),
 
@@ -368,35 +318,37 @@ class EnhancedUserListTile extends StatelessWidget {
       children: [
         Icon(
           icon,
-          size: 20,
+          size: 16,
           color: color,
         ),
-        const SizedBox(height: 4),
+        const SizedBox(height: 2),
         if (showCount) ...[
           if (isLoading)
             SizedBox(
-              width: 16,
-              height: 16,
+              width: 12,
+              height: 12,
               child: CircularProgressIndicator(
-                strokeWidth: 2,
+                strokeWidth: 1.5,
                 valueColor: AlwaysStoppedAnimation<Color>(color),
               ),
             )
           else
             Text(
               count?.toString() ?? '-',
-              style: theme.textTheme.titleMedium?.copyWith(
+              style: theme.textTheme.titleSmall?.copyWith(
                 fontWeight: FontWeight.bold,
                 color: color,
+                fontSize: 11,
               ),
             ),
-          const SizedBox(height: 2),
+          const SizedBox(height: 1),
         ],
         Text(
           label,
           style: theme.textTheme.bodySmall?.copyWith(
             color: color,
             fontWeight: FontWeight.w500,
+            fontSize: 9,
           ),
           textAlign: TextAlign.center,
         ),

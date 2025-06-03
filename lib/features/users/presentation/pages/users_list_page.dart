@@ -1,7 +1,6 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:cached_network_image/cached_network_image.dart';
 import '../blocs/users_cubit.dart';
 import '../../domain/entities/user.dart';
 import '../../../../core/router/app_router.dart';
@@ -22,9 +21,7 @@ class _UsersListPageState extends State<UsersListPage>
   final TextEditingController _searchController = TextEditingController();
   Timer? _debounceTimer;
 
-  // User stats management
-  final Map<int, UserStats> _userStats = {};
-  final Set<int> _loadingStats = {};
+  // Remove widget-level stats management - use service singleton instead
   late UserStatsService _userStatsService;
 
   late AnimationController _headerAnimationController;
@@ -58,10 +55,8 @@ class _UsersListPageState extends State<UsersListPage>
       curve: Curves.easeOutQuart,
     ));
 
-    // Initialize user stats service
-    _userStatsService = UserStatsService(
-      userRepository: context.read(),
-    );
+    // Get the singleton UserStatsService from dependency injection
+    _userStatsService = context.read<UserStatsService>();
 
     // Start animations
     _headerAnimationController.forward();
@@ -101,40 +96,19 @@ class _UsersListPageState extends State<UsersListPage>
 
   void _onRefresh() {
     _userStatsService.clearCache();
-    _userStats.clear();
-    _loadingStats.clear();
     context.read<UsersCubit>().refreshUsers();
   }
 
-  // Load stats for users
-  Future<void> _loadStatsForUsers(List<User> users) async {
+  // Simplified stats loading that uses the singleton service
+  Future<void> _loadStatsForUsersInBackground(List<User> users) async {
     final userIds = users
         .map((user) => user.id)
-        .where(
-            (id) => !_userStats.containsKey(id) && !_loadingStats.contains(id))
+        .where((id) => !_userStatsService.hasValidCache(id))
         .toList();
 
-    if (userIds.isEmpty) return;
-
-    setState(() {
-      _loadingStats.addAll(userIds);
-    });
-
-    try {
-      final statsMap = await _userStatsService.getUsersStats(userIds);
-
-      if (mounted) {
-        setState(() {
-          _userStats.addAll(statsMap);
-          _loadingStats.removeAll(userIds);
-        });
-      }
-    } catch (e) {
-      if (mounted) {
-        setState(() {
-          _loadingStats.removeAll(userIds);
-        });
-      }
+    if (userIds.isNotEmpty) {
+      // Load stats in background without blocking UI
+      _userStatsService.getUsersStats(userIds);
     }
   }
 
@@ -169,7 +143,7 @@ class _UsersListPageState extends State<UsersListPage>
                 listener: (context, state) {
                   // Load stats when users are loaded
                   if (state.users.isNotEmpty) {
-                    _loadStatsForUsers(state.users);
+                    _loadStatsForUsersInBackground(state.users);
                   }
                 },
                 builder: (context, state) {
@@ -193,9 +167,8 @@ class _UsersListPageState extends State<UsersListPage>
             // Enhanced status bar
             BlocBuilder<UsersCubit, UsersCubitState>(
               builder: (context, state) {
-                if (state.isOffline ||
-                    state.isSyncing ||
-                    state.lastSyncTime != null) {
+                // Only show status bar for offline or syncing states
+                if (state.isOffline || state.isSyncing) {
                   return _buildEnhancedStatusBar(state, theme);
                 }
                 return const SizedBox.shrink();
@@ -400,8 +373,8 @@ class _UsersListPageState extends State<UsersListPage>
           }
 
           final user = state.users[index];
-          final stats = _userStats[user.id];
-          final isLoadingStats = _loadingStats.contains(user.id);
+          final stats = _userStatsService.getStatsForUser(user.id);
+          final isLoadingStats = _userStatsService.isLoadingStats(user.id);
           final isInitialBatch = index < 15; // First 15 are from initial batch
 
           return AnimatedContainer(
@@ -564,9 +537,7 @@ class _UsersListPageState extends State<UsersListPage>
       decoration: BoxDecoration(
         color: state.isOffline
             ? colorScheme.errorContainer
-            : state.isSyncing
-                ? colorScheme.primaryContainer
-                : colorScheme.surfaceContainerHighest,
+            : colorScheme.primaryContainer,
         borderRadius: BorderRadius.circular(16),
         border: Border.all(
           color: colorScheme.outline.withOpacity(0.1),
@@ -575,34 +546,22 @@ class _UsersListPageState extends State<UsersListPage>
       child: Row(
         children: [
           Icon(
-            state.isOffline
-                ? Icons.wifi_off
-                : state.isSyncing
-                    ? Icons.sync
-                    : Icons.check_circle,
+            state.isOffline ? Icons.wifi_off : Icons.sync,
             size: 20,
             color: state.isOffline
                 ? colorScheme.onErrorContainer
-                : state.isSyncing
-                    ? colorScheme.onPrimaryContainer
-                    : colorScheme.primary,
+                : colorScheme.onPrimaryContainer,
           ),
           const SizedBox(width: 12),
           Expanded(
             child: Text(
               state.isOffline
-                  ? 'Offline - Showing cached users'
-                  : state.isSyncing
-                      ? 'Syncing with server...'
-                      : state.lastSyncTime != null
-                          ? 'Last synced: ${_formatTime(state.lastSyncTime!)}'
-                          : 'All systems ready',
+                  ? 'Offline - Showing stored users'
+                  : 'Syncing with server...',
               style: theme.textTheme.bodyMedium?.copyWith(
                 color: state.isOffline
                     ? colorScheme.onErrorContainer
-                    : state.isSyncing
-                        ? colorScheme.onPrimaryContainer
-                        : colorScheme.onSurfaceVariant,
+                    : colorScheme.onPrimaryContainer,
                 fontWeight: FontWeight.w500,
               ),
             ),
@@ -621,21 +580,6 @@ class _UsersListPageState extends State<UsersListPage>
         ],
       ),
     );
-  }
-
-  String _formatTime(DateTime time) {
-    final now = DateTime.now();
-    final difference = now.difference(time);
-
-    if (difference.inMinutes < 1) {
-      return 'just now';
-    } else if (difference.inHours < 1) {
-      return '${difference.inMinutes}m ago';
-    } else if (difference.inDays < 1) {
-      return '${difference.inHours}h ago';
-    } else {
-      return '${difference.inDays}d ago';
-    }
   }
 
   void _showCacheInfo() async {
