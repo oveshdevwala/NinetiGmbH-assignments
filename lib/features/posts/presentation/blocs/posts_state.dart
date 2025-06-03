@@ -1,43 +1,38 @@
-part of 'users_bloc.dart';
+import 'package:equatable/equatable.dart';
+import '../../../users/domain/entities/post.dart';
 
-class UsersState extends Equatable {
-  final List<User> users;
+class PostsState extends Equatable {
+  final List<Post> posts;
   final bool isLoading;
   final bool isLoadingMore;
   final String? error;
   final bool hasReachedMax;
-  final int currentSkip;
-  final bool isSearching;
-  final String searchQuery;
+  final int currentPage;
   final bool isOffline;
   final bool isSyncing;
   final DateTime? lastSyncTime;
 
-  const UsersState({
-    this.users = const [],
+  const PostsState({
+    required this.posts,
     this.isLoading = false,
     this.isLoadingMore = false,
     this.error,
     this.hasReachedMax = false,
-    this.currentSkip = 0,
-    this.isSearching = false,
-    this.searchQuery = '',
+    this.currentPage = 0,
     this.isOffline = false,
     this.isSyncing = false,
     this.lastSyncTime,
   });
 
   // Initial state
-  factory UsersState.initial() {
-    return const UsersState(
-      users: [],
+  factory PostsState.initial() {
+    return const PostsState(
+      posts: [],
       isLoading: false,
       isLoadingMore: false,
       error: null,
       hasReachedMax: false,
-      currentSkip: 0,
-      isSearching: false,
-      searchQuery: '',
+      currentPage: 0,
       isOffline: false,
       isSyncing: false,
       lastSyncTime: null,
@@ -45,7 +40,7 @@ class UsersState extends Equatable {
   }
 
   // Loading state
-  UsersState toLoading() {
+  PostsState toLoading() {
     return copyWith(
       isLoading: true,
       error: null,
@@ -53,7 +48,7 @@ class UsersState extends Equatable {
   }
 
   // Loading more state
-  UsersState toLoadingMore() {
+  PostsState toLoadingMore() {
     return copyWith(
       isLoadingMore: true,
       error: null,
@@ -61,19 +56,19 @@ class UsersState extends Equatable {
   }
 
   // Success state
-  UsersState toSuccess(List<User> users, {bool hasReachedMax = false}) {
+  PostsState toSuccess(List<Post> posts, {bool hasReachedMax = false}) {
     return copyWith(
-      users: users,
+      posts: posts,
       isLoading: false,
       isLoadingMore: false,
       error: null,
       hasReachedMax: hasReachedMax,
-      currentSkip: users.length,
+      currentPage: currentPage + (posts.length > this.posts.length ? 1 : 0),
     );
   }
 
   // Error state
-  UsersState toError(String error) {
+  PostsState toError(String error) {
     return copyWith(
       isLoading: false,
       isLoadingMore: false,
@@ -82,7 +77,7 @@ class UsersState extends Equatable {
   }
 
   // Offline state
-  UsersState toOffline() {
+  PostsState toOffline() {
     return copyWith(
       isOffline: true,
       isLoading: false,
@@ -92,7 +87,7 @@ class UsersState extends Equatable {
   }
 
   // Syncing state
-  UsersState toSyncing() {
+  PostsState toSyncing() {
     return copyWith(
       isSyncing: true,
       error: null,
@@ -100,7 +95,7 @@ class UsersState extends Equatable {
   }
 
   // Sync completed state
-  UsersState toSyncCompleted() {
+  PostsState toSyncCompleted() {
     return copyWith(
       isSyncing: false,
       lastSyncTime: DateTime.now(),
@@ -108,28 +103,24 @@ class UsersState extends Equatable {
     );
   }
 
-  UsersState copyWith({
-    List<User>? users,
+  PostsState copyWith({
+    List<Post>? posts,
     bool? isLoading,
     bool? isLoadingMore,
     String? error,
     bool? hasReachedMax,
-    int? currentSkip,
-    bool? isSearching,
-    String? searchQuery,
+    int? currentPage,
     bool? isOffline,
     bool? isSyncing,
     DateTime? lastSyncTime,
   }) {
-    return UsersState(
-      users: users ?? this.users,
+    return PostsState(
+      posts: posts ?? this.posts,
       isLoading: isLoading ?? this.isLoading,
       isLoadingMore: isLoadingMore ?? this.isLoadingMore,
       error: error ?? this.error,
       hasReachedMax: hasReachedMax ?? this.hasReachedMax,
-      currentSkip: currentSkip ?? this.currentSkip,
-      isSearching: isSearching ?? this.isSearching,
-      searchQuery: searchQuery ?? this.searchQuery,
+      currentPage: currentPage ?? this.currentPage,
       isOffline: isOffline ?? this.isOffline,
       isSyncing: isSyncing ?? this.isSyncing,
       lastSyncTime: lastSyncTime ?? this.lastSyncTime,
@@ -138,14 +129,12 @@ class UsersState extends Equatable {
 
   @override
   List<Object?> get props => [
-        users,
+        posts,
         isLoading,
         isLoadingMore,
         error,
         hasReachedMax,
-        currentSkip,
-        isSearching,
-        searchQuery,
+        currentPage,
         isOffline,
         isSyncing,
         lastSyncTime,

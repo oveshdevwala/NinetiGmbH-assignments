@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import '../blocs/todos_bloc.dart';
+import '../blocs/scroll_cubit.dart';
 import '../widgets/todo_card.dart';
 import '../../../../shared/widgets/loading_indicator.dart';
+import '../../../../shared/widgets/floating_scroll_buttons.dart';
 
 class TodosTab extends StatefulWidget {
   const TodosTab({super.key});
@@ -11,22 +13,39 @@ class TodosTab extends StatefulWidget {
   State<TodosTab> createState() => _TodosTabState();
 }
 
-class _TodosTabState extends State<TodosTab> {
-  late ScrollController _scrollController;
+class _TodosTabState extends State<TodosTab>
+    with AutomaticKeepAliveClientMixin {
+  ScrollController? _scrollController;
+
+  @override
+  bool get wantKeepAlive => true; // Keep tab alive to preserve scroll position
 
   @override
   void initState() {
     super.initState();
-    _scrollController = ScrollController();
-    _scrollController.addListener(_onScroll);
 
-    // Use preloaded data - no need to reload
-    context.read<TodosBloc>().add(const LoadAllTodosEvent());
+    // Get the scroll controller for todos tab from ScrollCubit
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) {
+        final scrollCubit = context.read<ScrollCubit>();
+        _scrollController = scrollCubit.getScrollController(TabType.todos);
+
+        // Add pagination listener
+        _scrollController?.addListener(_onScroll);
+      }
+    });
+
+    // Load todos data
+    if (mounted) {
+      context.read<TodosBloc>().add(const LoadAllTodosEvent());
+    }
   }
 
   @override
   void dispose() {
-    _scrollController.dispose();
+    // Remove pagination listener but keep the scroll controller
+    // as it's managed by ScrollCubit
+    _scrollController?.removeListener(_onScroll);
     super.dispose();
   }
 
@@ -37,217 +56,166 @@ class _TodosTabState extends State<TodosTab> {
   }
 
   bool get _isBottom {
-    if (!_scrollController.hasClients) return false;
-    final maxScroll = _scrollController.position.maxScrollExtent;
-    final currentScroll = _scrollController.offset;
+    if (_scrollController == null || !_scrollController!.hasClients)
+      return false;
+    final maxScroll = _scrollController!.position.maxScrollExtent;
+    final currentScroll = _scrollController!.offset;
     return currentScroll >= (maxScroll * 0.9); // Load more when 90% scrolled
   }
 
   @override
   Widget build(BuildContext context) {
+    super.build(context); // Required for AutomaticKeepAliveClientMixin
+
     final theme = Theme.of(context);
 
-    return Container(
-      color: theme.colorScheme.surface,
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Expanded(
-            child: BlocBuilder<TodosBloc, TodosState>(
-              builder: (context, state) {
-                if (state.isLoading && state.todos.isEmpty) {
-                  return ListView.builder(
-                    padding: const EdgeInsets.all(16),
-                    itemCount: 8,
-                    itemBuilder: (context, index) => Container(
-                      height: 60,
-                      margin: const EdgeInsets.only(bottom: 8),
-                      decoration: BoxDecoration(
-                        color: theme.colorScheme.surfaceContainerHighest
-                            .withOpacity(0.3),
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                      child: const LoadingIndicator(useShimmer: true),
-                    ),
-                  );
-                }
-
-                if (state.error != null && state.todos.isEmpty) {
-                  return Center(
-                    child: Container(
-                      margin: const EdgeInsets.all(32),
-                      padding: const EdgeInsets.all(24),
-                      decoration: BoxDecoration(
-                        color:
-                            theme.colorScheme.errorContainer.withOpacity(0.1),
-                        borderRadius: BorderRadius.circular(20),
-                        border: Border.all(
-                          color: theme.colorScheme.error.withOpacity(0.2),
-                          width: 1,
+    return Stack(
+      children: [
+        Container(
+          color: theme.colorScheme.surface,
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Expanded(
+                child: BlocBuilder<TodosBloc, TodosState>(
+                  builder: (context, state) {
+                    if (state.isLoading && state.todos.isEmpty) {
+                      return ListView.builder(
+                        padding: const EdgeInsets.all(16),
+                        itemCount: 8,
+                        itemBuilder: (context, index) => Container(
+                          height: 60,
+                          margin: const EdgeInsets.only(bottom: 8),
+                          decoration: BoxDecoration(
+                            color: theme.colorScheme.surfaceContainerHighest
+                                .withOpacity(0.3),
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          child: const LoadingIndicator(useShimmer: true),
                         ),
-                      ),
-                      child: Column(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          Container(
-                            padding: const EdgeInsets.all(16),
-                            decoration: BoxDecoration(
-                              color: theme.colorScheme.error.withOpacity(0.1),
-                              shape: BoxShape.circle,
-                            ),
-                            child: Icon(
-                              Icons.error_outline_rounded,
-                              size: 48,
+                      );
+                    }
+
+                    if (state.error != null && state.todos.isEmpty) {
+                      return Center(
+                        child: Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Icon(
+                              Icons.error_outline,
+                              size: 64,
                               color: theme.colorScheme.error,
                             ),
-                          ),
-                          const SizedBox(height: 16),
-                          Text(
-                            'Oops! Something went wrong',
-                            style: theme.textTheme.titleLarge?.copyWith(
-                              color: theme.colorScheme.error,
-                              fontWeight: FontWeight.bold,
+                            const SizedBox(height: 16),
+                            Text(
+                              'Error loading todos',
+                              style: theme.textTheme.headlineSmall?.copyWith(
+                                color: theme.colorScheme.error,
+                              ),
                             ),
-                          ),
-                          const SizedBox(height: 8),
-                          Text(
-                            state.error!,
-                            style: theme.textTheme.bodyMedium?.copyWith(
-                              color:
-                                  theme.colorScheme.onSurface.withOpacity(0.7),
+                            const SizedBox(height: 8),
+                            Text(
+                              state.error!,
+                              style: theme.textTheme.bodyMedium?.copyWith(
+                                color: theme.colorScheme.onSurface
+                                    .withOpacity(0.7),
+                              ),
+                              textAlign: TextAlign.center,
                             ),
-                            textAlign: TextAlign.center,
-                          ),
-                          const SizedBox(height: 16),
-                          ElevatedButton.icon(
-                            onPressed: () {
+                            const SizedBox(height: 24),
+                            FilledButton(
+                              onPressed: () {
+                                context
+                                    .read<TodosBloc>()
+                                    .add(const LoadAllTodosEvent());
+                              },
+                              child: const Text('Retry'),
+                            ),
+                          ],
+                        ),
+                      );
+                    }
+
+                    return Column(
+                      children: [
+                        Expanded(
+                          child: RefreshIndicator(
+                            onRefresh: () async {
                               context
                                   .read<TodosBloc>()
                                   .add(const RefreshTodosEvent());
                             },
-                            icon: const Icon(Icons.refresh),
-                            label: const Text('Retry'),
+                            color: theme.colorScheme.secondary,
+                            child: CustomScrollView(
+                              key: ScrollCubit.getPageKeyForTab(
+                                  TabType.todos), // Page storage key
+                              controller: _scrollController,
+                              slivers: [
+                                SliverToBoxAdapter(
+                                  child: _todosHeaderWidget(theme),
+                                ),
+                                SliverList(
+                                  delegate: SliverChildBuilderDelegate(
+                                    (context, index) {
+                                      if (index < state.todos.length) {
+                                        final todo = state.todos[index];
+                                        return Padding(
+                                          padding: const EdgeInsets.fromLTRB(
+                                              16, 0, 16, 8),
+                                          child: TodoCard(
+                                            todo: todo,
+                                            onCompletedChanged: (completed) {
+                                              // Handle todo completion toggle
+                                              // Note: This would require implementing
+                                              // a toggle event in TodosBloc if needed
+                                            },
+                                          ),
+                                        );
+                                      } else if (index == state.todos.length &&
+                                          state.isLoadingMore) {
+                                        return Container(
+                                          height: 60,
+                                          margin: const EdgeInsets.fromLTRB(
+                                              16, 0, 16, 8),
+                                          decoration: BoxDecoration(
+                                            color: theme.colorScheme
+                                                .surfaceContainerHighest
+                                                .withOpacity(0.3),
+                                            borderRadius:
+                                                BorderRadius.circular(12),
+                                          ),
+                                          child: const LoadingIndicator(
+                                              useShimmer: true),
+                                        );
+                                      }
+                                      return null;
+                                    },
+                                    childCount: state.todos.length +
+                                        (state.isLoadingMore ? 1 : 0),
+                                  ),
+                                ),
+                                // Add some bottom padding
+                                const SliverToBoxAdapter(
+                                  child: SizedBox(
+                                      height:
+                                          80), // Extra space for floating buttons
+                                ),
+                              ],
+                            ),
                           ),
-                        ],
-                      ),
-                    ),
-                  );
-                }
-
-                if (state.todos.isEmpty) {
-                  return Center(
-                    child: Container(
-                      margin: const EdgeInsets.all(32),
-                      padding: const EdgeInsets.all(24),
-                      decoration: BoxDecoration(
-                        color: theme.colorScheme.surfaceContainerHighest,
-                        borderRadius: BorderRadius.circular(20),
-                      ),
-                      child: Column(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          Container(
-                            padding: const EdgeInsets.all(16),
-                            decoration: BoxDecoration(
-                              color:
-                                  theme.colorScheme.secondary.withOpacity(0.1),
-                              shape: BoxShape.circle,
-                            ),
-                            child: Icon(
-                              Icons.checklist_outlined,
-                              size: 48,
-                              color: theme.colorScheme.secondary,
-                            ),
-                          ),
-                          const SizedBox(height: 16),
-                          Text(
-                            'No todos available',
-                            style: theme.textTheme.titleLarge?.copyWith(
-                              color: theme.colorScheme.onSurface,
-                              fontWeight: FontWeight.bold,
-                            ),
-                          ),
-                          const SizedBox(height: 8),
-                          Text(
-                            'All tasks completed or none created yet',
-                            style: theme.textTheme.bodyMedium?.copyWith(
-                              color:
-                                  theme.colorScheme.onSurface.withOpacity(0.7),
-                            ),
-                            textAlign: TextAlign.center,
-                          ),
-                        ],
-                      ),
-                    ),
-                  );
-                }
-
-                return Column(
-                  children: [
-                    Expanded(
-                      child: RefreshIndicator(
-                        onRefresh: () async {
-                          context
-                              .read<TodosBloc>()
-                              .add(const RefreshTodosEvent());
-                        },
-                        color: theme.colorScheme.secondary,
-                        child: CustomScrollView(
-                          controller: _scrollController,
-                          slivers: [
-                            SliverToBoxAdapter(
-                              child: _todosHeaderWidget(theme),
-                            ),
-                            SliverList(
-                              delegate: SliverChildBuilderDelegate(
-                                (context, index) {
-                                  if (index < state.todos.length) {
-                                    final todo = state.todos[index];
-                                    return Padding(
-                                      padding: const EdgeInsets.fromLTRB(
-                                          16, 0, 16, 8),
-                                      child: TodoCard(
-                                        todo: todo,
-                                        onTap: () {
-                                          // Handle todo tap
-                                        },
-                                        onCompletedChanged: (value) {
-                                          // Handle todo completion toggle
-                                          // You can add an event to update todo completion
-                                        },
-                                      ),
-                                    );
-                                  } else {
-                                    // Show loading indicator at the bottom
-                                    return Container(
-                                      padding: const EdgeInsets.all(16),
-                                      child: Center(
-                                        child: state.isLoadingMore
-                                            ? const CircularProgressIndicator()
-                                            : const SizedBox.shrink(),
-                                      ),
-                                    );
-                                  }
-                                },
-                                childCount: state.todos.length +
-                                    (state.isLoadingMore ? 1 : 0),
-                              ),
-                            ),
-                            // Add some bottom padding
-                            const SliverToBoxAdapter(
-                              child: SizedBox(height: 16),
-                            ),
-                          ],
                         ),
-                      ),
-                    ),
-                  ],
-                );
-              },
-            ),
+                      ],
+                    );
+                  },
+                ),
+              ),
+            ],
           ),
-        ],
-      ),
+        ),
+
+        // Floating scroll buttons
+        const FloatingScrollButtons(),
+      ],
     );
   }
 

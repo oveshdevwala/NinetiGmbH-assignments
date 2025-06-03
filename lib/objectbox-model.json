@@ -1,0 +1,270 @@
+{
+  "_note1": "KEEP THIS FILE! Check it into a version control system (VCS) like git.",
+  "_note2": "ObjectBox manages crucial IDs for your object model. See docs for details.",
+  "_note3": "If you have VCS merge conflicts, you must resolve them according to ObjectBox docs.",
+  "entities": [
+    {
+      "id": "1:9116086646124119349",
+      "lastPropertyId": "13:79309412489305104",
+      "name": "PostEntity",
+      "properties": [
+        {
+          "id": "1:2170747973061486693",
+          "name": "id",
+          "type": 6,
+          "flags": 1
+        },
+        {
+          "id": "2:5476844452928928391",
+          "name": "title",
+          "type": 9
+        },
+        {
+          "id": "3:1032698523827589894",
+          "name": "body",
+          "type": 9
+        },
+        {
+          "id": "4:2290193841736332301",
+          "name": "userId",
+          "type": 6
+        },
+        {
+          "id": "5:709856801898715499",
+          "name": "tags",
+          "type": 9
+        },
+        {
+          "id": "6:8808760978789474809",
+          "name": "likes",
+          "type": 6
+        },
+        {
+          "id": "7:2093863650588756217",
+          "name": "dislikes",
+          "type": 6
+        },
+        {
+          "id": "8:3467286005732861792",
+          "name": "views",
+          "type": 6
+        },
+        {
+          "id": "9:8945691039975599287",
+          "name": "createdAt",
+          "type": 10
+        },
+        {
+          "id": "10:3458444383266031896",
+          "name": "updatedAt",
+          "type": 10
+        },
+        {
+          "id": "11:180778921493492776",
+          "name": "isSynced",
+          "type": 1
+        },
+        {
+          "id": "12:943946550640602306",
+          "name": "isDeleted",
+          "type": 1
+        },
+        {
+          "id": "13:79309412489305104",
+          "name": "apiId",
+          "type": 6
+        }
+      ],
+      "relations": []
+    },
+    {
+      "id": "2:7040116451845359133",
+      "lastPropertyId": "8:1819174994301281181",
+      "name": "TodoEntity",
+      "properties": [
+        {
+          "id": "1:5684077919598866618",
+          "name": "id",
+          "type": 6,
+          "flags": 1
+        },
+        {
+          "id": "2:9052715223777082157",
+          "name": "todo",
+          "type": 9
+        },
+        {
+          "id": "3:12519361450347109",
+          "name": "completed",
+          "type": 1
+        },
+        {
+          "id": "4:2833094560470304745",
+          "name": "userId",
+          "type": 6
+        },
+        {
+          "id": "5:145747955210436802",
+          "name": "createdAt",
+          "type": 10
+        },
+        {
+          "id": "6:3465923718194944573",
+          "name": "updatedAt",
+          "type": 10
+        },
+        {
+          "id": "7:6568496261500895422",
+          "name": "isSynced",
+          "type": 1
+        },
+        {
+          "id": "8:1819174994301281181",
+          "name": "isDeleted",
+          "type": 1
+        }
+      ],
+      "relations": []
+    },
+    {
+      "id": "3:7472362351845363814",
+      "lastPropertyId": "24:2628802703812635962",
+      "name": "UserEntity",
+      "properties": [
+        {
+          "id": "1:1159075620889460016",
+          "name": "id",
+          "type": 6,
+          "flags": 1
+        },
+        {
+          "id": "2:6655137040040444757",
+          "name": "apiId",
+          "type": 6
+        },
+        {
+          "id": "3:1879823851366795788",
+          "name": "firstName",
+          "type": 9
+        },
+        {
+          "id": "4:1766194143960014192",
+          "name": "lastName",
+          "type": 9
+        },
+        {
+          "id": "5:5740249175984322827",
+          "name": "username",
+          "type": 9
+        },
+        {
+          "id": "6:7155296004684610038",
+          "name": "email",
+          "type": 9
+        },
+        {
+          "id": "7:5234317420485990524",
+          "name": "phone",
+          "type": 9
+        },
+        {
+          "id": "8:7028220068245670517",
+          "name": "image",
+          "type": 9
+        },
+        {
+          "id": "9:2114537265410055520",
+          "name": "gender",
+          "type": 9
+        },
+        {
+          "id": "10:6552879911657839209",
+          "name": "birthDate",
+          "type": 9
+        },
+        {
+          "id": "11:5092986727246586129",
+          "name": "addressStreet",
+          "type": 9
+        },
+        {
+          "id": "12:6744515397374018511",
+          "name": "addressCity",
+          "type": 9
+        },
+        {
+          "id": "13:224046696213902714",
+          "name": "addressState",
+          "type": 9
+        },
+        {
+          "id": "14:4621521869772294343",
+          "name": "addressStateCode",
+          "type": 9
+        },
+        {
+          "id": "15:56398452258400314",
+          "name": "addressPostalCode",
+          "type": 9
+        },
+        {
+          "id": "16:7762191897458757971",
+          "name": "addressCountry",
+          "type": 9
+        },
+        {
+          "id": "17:4651251670472082276",
+          "name": "companyName",
+          "type": 9
+        },
+        {
+          "id": "18:559090054201602662",
+          "name": "companyDepartment",
+          "type": 9
+        },
+        {
+          "id": "19:3039556029105139686",
+          "name": "companyTitle",
+          "type": 9
+        },
+        {
+          "id": "20:3161392560085434947",
+          "name": "createdAt",
+          "type": 10
+        },
+        {
+          "id": "21:2499102737781203701",
+          "name": "updatedAt",
+          "type": 10
+        },
+        {
+          "id": "22:7495258009567133461",
+          "name": "isSynced",
+          "type": 1
+        },
+        {
+          "id": "23:3870399465252092488",
+          "name": "isDeleted",
+          "type": 1
+        },
+        {
+          "id": "24:2628802703812635962",
+          "name": "isInitialBatch",
+          "type": 1
+        }
+      ],
+      "relations": []
+    }
+  ],
+  "lastEntityId": "3:7472362351845363814",
+  "lastIndexId": "0:0",
+  "lastRelationId": "0:0",
+  "lastSequenceId": "0:0",
+  "modelVersion": 5,
+  "modelVersionParserMinimum": 5,
+  "retiredEntityUids": [],
+  "retiredIndexUids": [],
+  "retiredPropertyUids": [],
+  "retiredRelationUids": [],
+  "version": 1
+}

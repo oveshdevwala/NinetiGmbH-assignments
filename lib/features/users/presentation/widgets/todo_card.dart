@@ -116,8 +116,8 @@ class _TodoCardState extends State<TodoCard>
                     children: [
                       // Custom Checkbox with Animation
                       GestureDetector(
-                        onTap: () =>
-                            _handleCheckboxChanged(!widget.todo.completed),
+                        // onTap: () =>
+                        //     _handleCheckboxChanged(!widget.todo.completed),
                         child: AnimatedBuilder(
                           animation: _checkAnimation,
                           builder: (context, child) {

@@ -17,7 +17,7 @@ class UserRepositoryImpl implements UserRepository {
     int skip = 0,
   }) async {
     try {
-      final users = await remoteDataSource.getUsers(
+      final users = await remoteDataSource.getAllUsers(
         limit: limit,
         skip: skip,
       );

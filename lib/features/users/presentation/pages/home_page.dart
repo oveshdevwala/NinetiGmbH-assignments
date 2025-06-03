@@ -1,9 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:go_router/go_router.dart';
+import '../../../../core/router/app_router.dart';
 import '../blocs/posts_bloc.dart';
 import '../blocs/todos_bloc.dart';
+import '../blocs/scroll_cubit.dart';
 import '../widgets/posts_tab.dart';
 import '../widgets/todos_tab.dart';
+import '../../domain/entities/post.dart';
 
 class HomePage extends StatefulWidget {
   const HomePage({super.key});
@@ -47,23 +51,50 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
     ));
 
     // Preload initial data only once when app starts
-    context.read<PostsBloc>().add(const LoadInitialPostsEvent());
-    context.read<TodosBloc>().add(const LoadInitialTodosEvent());
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) {
+        context.read<PostsBloc>().add(const LoadInitialPostsEvent());
+        context.read<TodosBloc>().add(const LoadInitialTodosEvent());
+        context.read<ScrollCubit>().setCurrentTab(TabType.posts);
+      }
+    });
 
     // Start header animation
     _headerAnimationController.forward();
 
-    _tabController.addListener(() {
-      if (_tabController.index != _selectedIndex) {
-        setState(() {
-          _selectedIndex = _tabController.index;
-        });
-      }
-    });
+    // Tab controller listener
+    _tabController.addListener(_handleTabChange);
+  }
+
+  void _handleTabChange() {
+    if (!mounted) return;
+
+    if (_tabController.index != _selectedIndex) {
+      setState(() {
+        _selectedIndex = _tabController.index;
+      });
+
+      // Update scroll cubit with new tab
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted) {
+          try {
+            final scrollCubit = context.read<ScrollCubit>();
+            if (_selectedIndex == 0) {
+              scrollCubit.setCurrentTab(TabType.posts);
+            } else {
+              scrollCubit.setCurrentTab(TabType.todos);
+            }
+          } catch (e) {
+            // Ignore errors if widget is disposed
+          }
+        }
+      });
+    }
   }
 
   @override
   void dispose() {
+    _tabController.removeListener(_handleTabChange);
     _tabController.dispose();
     _headerAnimationController.dispose();
     super.dispose();
@@ -106,6 +137,24 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
           ],
         ),
       ),
+      floatingActionButton: FloatingActionButton.extended(
+        onPressed: () {
+          // Demo navigation to post detail page
+          const demoPost = Post(
+            id: 1,
+            title: 'Demo Post Title',
+            body:
+                'This is a demo post body with some content to demonstrate the post detail page functionality.',
+            userId: 1,
+            tags: ['demo', 'flutter', 'example'],
+            reactions: PostReactions(likes: 42, dislikes: 3),
+            views: 1234,
+          );
+          context.goToPostDetail(demoPost);
+        },
+        icon: const Icon(Icons.preview),
+        label: const Text('Demo Post'),
+      ),
     );
   }
 
@@ -113,16 +162,14 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
     final colorScheme = theme.colorScheme;
 
     return Container(
-      padding: const EdgeInsets.fromLTRB(20, 16, 20, 12),
+      padding: const EdgeInsets.fromLTRB(20, 20, 20, 12),
       child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // App Title with Stats
           Row(
             children: [
-              // Icon with gradient background
+              // App icon
               Container(
-                padding: const EdgeInsets.all(8),
+                padding: const EdgeInsets.all(10),
                 decoration: BoxDecoration(
                   gradient: LinearGradient(
                     begin: Alignment.topLeft,
@@ -137,12 +184,12 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
                     BoxShadow(
                       color: colorScheme.primary.withOpacity(0.3),
                       blurRadius: 8,
-                      offset: const Offset(0, 2),
+                      offset: const Offset(0, 4),
                     ),
                   ],
                 ),
                 child: Icon(
-                  Icons.dashboard_outlined,
+                  Icons.apps_rounded,
                   color: colorScheme.onPrimary,
                   size: 20,
                 ),
@@ -180,8 +227,8 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
 
           const SizedBox(height: 16),
 
-          // Advanced Tab Selector
-          _buildAdvancedTabSelector(theme),
+          // Material TabBar
+          _buildMaterialTabBar(theme),
         ],
       ),
     );
@@ -195,7 +242,6 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
         return BlocBuilder<TodosBloc, TodosState>(
           builder: (context, todosState) {
             final postCount = postsState.posts.length;
-            final todoCount = todosState.todos.length;
             final completedTodos =
                 todosState.todos.where((todo) => todo.completed).length;
 
@@ -263,7 +309,7 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
     );
   }
 
-  Widget _buildAdvancedTabSelector(ThemeData theme) {
+  Widget _buildMaterialTabBar(ThemeData theme) {
     final colorScheme = theme.colorScheme;
 
     return Container(
@@ -277,90 +323,59 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
           width: 1,
         ),
       ),
-      child: Row(
-        children: [
-          _buildTabButton(
-            index: 0,
-            icon: Icons.article_outlined,
-            selectedIcon: Icons.article,
-            label: 'Posts',
-            theme: theme,
-          ),
-          _buildTabButton(
-            index: 1,
-            icon: Icons.checklist_outlined,
-            selectedIcon: Icons.checklist,
-            label: 'Todos',
-            theme: theme,
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildTabButton({
-    required int index,
-    required IconData icon,
-    required IconData selectedIcon,
-    required String label,
-    required ThemeData theme,
-  }) {
-    final colorScheme = theme.colorScheme;
-    final isSelected = _selectedIndex == index;
-
-    return Expanded(
-      child: GestureDetector(
-        onTap: () {
-          _tabController.animateTo(index);
-        },
-        child: AnimatedContainer(
-          duration: const Duration(milliseconds: 200),
-          curve: Curves.easeInOut,
-          decoration: BoxDecoration(
-            color: isSelected ? colorScheme.primary : Colors.transparent,
-            borderRadius: BorderRadius.circular(10),
-            boxShadow: isSelected
-                ? [
-                    BoxShadow(
-                      color: colorScheme.primary.withOpacity(0.3),
-                      blurRadius: 8,
-                      offset: const Offset(0, 2),
-                    ),
-                  ]
-                : null,
-          ),
-          child: Center(
+      child: TabBar(
+        controller: _tabController,
+        indicator: BoxDecoration(
+          color: colorScheme.primary,
+          borderRadius: BorderRadius.circular(8),
+          boxShadow: [
+            BoxShadow(
+              color: colorScheme.primary.withOpacity(0.3),
+              blurRadius: 8,
+              offset: const Offset(0, 2),
+            ),
+          ],
+        ),
+        indicatorSize: TabBarIndicatorSize.tab,
+        dividerColor: Colors.transparent,
+        labelColor: colorScheme.onPrimary,
+        unselectedLabelColor: colorScheme.onSurface.withOpacity(0.7),
+        labelStyle: theme.textTheme.titleSmall?.copyWith(
+          fontWeight: FontWeight.w600,
+        ),
+        unselectedLabelStyle: theme.textTheme.titleSmall?.copyWith(
+          fontWeight: FontWeight.w500,
+        ),
+        tabs: const [
+          Tab(
             child: Row(
+              mainAxisAlignment: MainAxisAlignment.center,
               mainAxisSize: MainAxisSize.min,
               children: [
-                AnimatedSwitcher(
-                  duration: const Duration(milliseconds: 200),
-                  child: Icon(
-                    isSelected ? selectedIcon : icon,
-                    key: ValueKey(isSelected),
-                    size: 18,
-                    color: isSelected
-                        ? colorScheme.onPrimary
-                        : colorScheme.onSurface.withOpacity(0.7),
-                  ),
+                Icon(
+                  Icons.article_outlined,
+                  size: 18,
                 ),
-                const SizedBox(width: 6),
-                AnimatedDefaultTextStyle(
-                  duration: const Duration(milliseconds: 200),
-                  style: theme.textTheme.labelMedium?.copyWith(
-                        color: isSelected
-                            ? colorScheme.onPrimary
-                            : colorScheme.onSurface.withOpacity(0.7),
-                        fontWeight:
-                            isSelected ? FontWeight.w600 : FontWeight.w500,
-                      ) ??
-                      const TextStyle(),
-                  child: Text(label),
-                ),
+                SizedBox(width: 6),
+                Text('Posts'),
               ],
             ),
           ),
-        ),
+          Tab(
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Icon(
+                  Icons.checklist_outlined,
+                  size: 18,
+                ),
+                SizedBox(width: 6),
+                Text('Todos'),
+              ],
+            ),
+          ),
+        ],
       ),
     );
   }

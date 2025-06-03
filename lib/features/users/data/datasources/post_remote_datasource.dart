@@ -2,14 +2,15 @@ import 'package:dio/dio.dart';
 import '../../../../core/errors/exceptions.dart';
 import '../../../../core/utils/typedef.dart';
 import '../models/post_model.dart';
+import '../../domain/entities/post.dart';
 
 abstract class PostRemoteDataSource {
-  Future<List<PostModel>> getPostsByUser(int userId);
-  Future<List<PostModel>> getAllPosts({
+  Future<List<Post>> getPostsByUser(int userId);
+  Future<List<Post>> getAllPosts({
     int limit = 30,
     int skip = 0,
   });
-  Future<List<PostModel>> getPostsPaginated({
+  Future<List<Post>> getPostsPaginated({
     int limit = 30,
     int skip = 0,
   });
@@ -21,7 +22,7 @@ class PostRemoteDataSourceImpl implements PostRemoteDataSource {
   const PostRemoteDataSourceImpl({required this.dio});
 
   @override
-  Future<List<PostModel>> getPostsByUser(int userId) async {
+  Future<List<Post>> getPostsByUser(int userId) async {
     try {
       final response = await dio.get('/posts/user/$userId');
 
@@ -51,7 +52,7 @@ class PostRemoteDataSourceImpl implements PostRemoteDataSource {
   }
 
   @override
-  Future<List<PostModel>> getAllPosts({
+  Future<List<Post>> getAllPosts({
     int limit = 30,
     int skip = 0,
   }) async {
@@ -87,7 +88,7 @@ class PostRemoteDataSourceImpl implements PostRemoteDataSource {
   }
 
   @override
-  Future<List<PostModel>> getPostsPaginated({
+  Future<List<Post>> getPostsPaginated({
     int limit = 30,
     int skip = 0,
   }) async {
