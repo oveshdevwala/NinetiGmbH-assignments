@@ -245,8 +245,8 @@ class _FullUserProfileViewState extends State<_FullUserProfileView>
 
                 // Floating Scroll Buttons
                 const Positioned(
-                  bottom: 20,
-                  right: 20,
+                  bottom: 45,
+                  right: 16,
                   child: FloatingScrollButtons(),
                 ),
               ],
