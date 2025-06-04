@@ -3,6 +3,8 @@
 A comprehensive Flutter application showcasing modern development practices with BLoC pattern, API integration, offline-first architecture, and clean architecture principles.
 
 ## 📱 Project Overview
+### **ScreenShot**
+**Attached IN the Assets Folder**
 
 This application demonstrates advanced Flutter development by building a full-featured user management system that:
 
