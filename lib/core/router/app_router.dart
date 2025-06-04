@@ -15,7 +15,7 @@ import '../../features/profile/presentation/pages/profile_page.dart';
 import '../../../features/users/presentation/pages/users_list_page.dart';
 import '../../features/home/presentation/pages/post_detail_page.dart';
 import '../../features/my_posts/presentation/pages/my_posts_page.dart';
-import '../../features/home/presentation/pages/create_edit_post_page.dart';
+import '../../features/my_posts/presentation/pages/create_edit_post_page.dart';
 
 // Domain entities
 import '../../features/home/domain/entities/post.dart';

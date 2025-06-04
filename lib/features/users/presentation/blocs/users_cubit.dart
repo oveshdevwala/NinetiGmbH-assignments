@@ -1,13 +1,13 @@
 import 'dart:async';
 import 'dart:developer';
-import 'package:assignments/features/users/presentation/blocs/users_cubit_state.dart';
-import 'package:flutter_bloc/flutter_bloc.dart';
+  import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../domain/entities/user.dart';
 import '../../domain/repositories/user_repository.dart';
 import '../../data/repositories/user_repository_offline_impl.dart';
 import '../../../../shared/services/connectivity_service.dart';
 import '../../../../shared/services/sync_service.dart';
 
+part 'users_cubit_state.dart';
 /// Cubit for managing users with offline-first functionality and specific pagination
 class UsersCubit extends Cubit<UsersCubitState> {
   final UserRepository _userRepository;

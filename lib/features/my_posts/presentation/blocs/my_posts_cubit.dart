@@ -1,9 +1,9 @@
-import 'package:assignments/features/my_posts/presentation/blocs/my_posts_state.dart';
+
 import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../domain/entities/my_post.dart';
 import '../../domain/repositories/my_post_repository.dart';
-
-
+import 'package:equatable/equatable.dart';
+part 'my_posts_state.dart';
 /// Cubit for managing user's personal posts
 class MyPostsCubit extends Cubit<MyPostsState> {
   final MyPostRepository repository;

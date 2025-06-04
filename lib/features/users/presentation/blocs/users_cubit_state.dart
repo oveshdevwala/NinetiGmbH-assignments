@@ -1,4 +1,4 @@
-import 'package:assignments/features/users/domain/entities/user.dart';
+part of 'users_cubit.dart';
 
 class UsersCubitState {
   final List<User> users;

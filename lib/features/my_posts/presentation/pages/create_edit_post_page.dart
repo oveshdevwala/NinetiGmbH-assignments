@@ -1,9 +1,9 @@
-import 'package:assignments/features/my_posts/presentation/blocs/my_posts_state.dart';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
-import '../../../my_posts/domain/entities/my_post.dart';
-import '../../../my_posts/presentation/blocs/my_posts_cubit.dart';
+import '../../domain/entities/my_post.dart';
+import '../blocs/my_posts_cubit.dart';
 
 class CreateEditPostPage extends StatefulWidget {
   final MyPost? post; // null for create, non-null for edit

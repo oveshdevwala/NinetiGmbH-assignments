@@ -1,5 +1,4 @@
-import 'package:assignments/features/my_posts/domain/entities/my_post.dart';
-import 'package:equatable/equatable.dart';
+part of 'my_posts_cubit.dart';
 
 /// State for MyPostsCubit
 class MyPostsState extends Equatable {
