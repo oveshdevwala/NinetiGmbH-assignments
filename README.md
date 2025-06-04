@@ -5,8 +5,8 @@ A comprehensive Flutter application showcasing modern development practices with
 ## 📱 Project Overview
 ### **ScreenShot**
 
-![Screenshot_2025-06-04-17-13-37-36_309b0f946aaca84e3945f034d1efaf45](https://github.com/user-attachments/assets/98b55395-85ac-407f-b7c2-d191b16d8b7b 250x250  )
-![Screenshot_2025-06-04-17-13-32-83_309b0f946aaca84e3945f034d1efaf45](https://github.com/user-attachments/assets/273daffb-5668-43a7-a0a8-da2f9a26ba7c)
+![Screenshot_2025-06-04-17-13-37-36_309b0f946aaca84e3945f034d1efaf45](https://github.com/user-attachments/assets/98b55395-85ac-407f-b7c2-d191b16d8b7b | highte=100  )
+![Screenshot_2025-06-04-17-13-32-83_309b0f946aaca84e3945f034d1efaf45](https://github.com/user-attachments/assets/273daffb-5668-43a7-a0a8-da2f9a26ba7c | 230x600 )
 ![Screenshot_2025-06-04-17-13-29-03_309b0f946aaca84e3945f034d1efaf45](https://github.com/user-attachments/assets/fb148fdc-67ce-4320-9ccf-d36dd2c4456b)
 ![Screenshot_2025-06-04-17-13-26-59_309b0f946aaca84e3945f034d1efaf45](https://github.com/user-attachments/assets/e8c357b8-f6f0-482b-b4f5-bf0e06f25b4c)
 ![Screenshot_2025-06-04-17-13-21-22_309b0f946aaca84e3945f034d1efaf45](https://github.com/user-attachments/assets/5b0438b0-8127-48cf-af49-b8e5c7d08adf)
