@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import '../../features/users/domain/entities/todo.dart';
+import '../../features/home/domain/entities/todo.dart';
 import 'profile_todo_tile.dart';
 
 /// Example usage and variations of ProfileTodoTile and CompactProfileTodoTile widgets

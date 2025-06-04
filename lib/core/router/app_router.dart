@@ -9,17 +9,17 @@ import '../../../shared/widgets/app_scaffold.dart';
 import '../../../shared/widgets/page_transitions.dart';
 
 // Features imports
-import '../../../features/users/presentation/pages/home_page.dart';
-import '../../../features/users/presentation/pages/full_user_profile_page.dart';
-import '../../../features/users/presentation/pages/profile_page.dart';
+import '../../features/home/presentation/pages/home_page.dart';
+import '../../features/profile/presentation/pages/full_user_profile_page.dart';
+import '../../features/profile/presentation/pages/profile_page.dart';
 import '../../../features/users/presentation/pages/users_list_page.dart';
-import '../../../features/posts/presentation/pages/post_detail_page.dart';
-import '../../../features/posts/presentation/pages/my_posts_page.dart';
-import '../../../features/posts/presentation/pages/create_edit_post_page.dart';
+import '../../features/home/presentation/pages/post_detail_page.dart';
+import '../../features/my_posts/presentation/pages/my_posts_page.dart';
+import '../../features/home/presentation/pages/create_edit_post_page.dart';
 
 // Domain entities
-import '../../../features/users/domain/entities/post.dart';
-import '../../../features/posts/domain/entities/my_post.dart';
+import '../../features/home/domain/entities/post.dart';
+import '../../features/my_posts/domain/entities/my_post.dart';
 
 /// Route names used for navigation
 class AppRoutes {

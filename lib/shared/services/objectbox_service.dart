@@ -1,9 +1,8 @@
 import 'dart:developer';
-import 'package:objectbox/objectbox.dart';
-import '../../features/users/data/models/user_entity.dart';
-import '../../features/users/data/models/post_entity.dart';
-import '../../features/users/data/models/todo_entity.dart';
-import '../../features/posts/data/models/my_post_entity.dart';
+import '../../features/home/data/model/user_entity.dart';
+import '../../features/home/data/model/post_entity.dart';
+import '../../features/home/data/model/todo_entity.dart';
+import '../../features/my_posts/data/models/my_post_entity.dart';
 import '../../objectbox.g.dart'; // Generated file
 
 /// ObjectBox service for managing the database

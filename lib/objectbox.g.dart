@@ -14,10 +14,10 @@ import 'package:objectbox/internal.dart'
 import 'package:objectbox/objectbox.dart' as obx;
 import 'package:objectbox_flutter_libs/objectbox_flutter_libs.dart';
 
-import 'features/posts/data/models/my_post_entity.dart';
-import 'features/users/data/models/post_entity.dart';
-import 'features/users/data/models/todo_entity.dart';
-import 'features/users/data/models/user_entity.dart';
+import 'features/my_posts/data/models/my_post_entity.dart';
+import 'features/home/data/model/post_entity.dart';
+import 'features/home/data/model/todo_entity.dart';
+import 'features/home/data/model/user_entity.dart';
 
 export 'package:objectbox/objectbox.dart'; // so that callers only have to import this file
 

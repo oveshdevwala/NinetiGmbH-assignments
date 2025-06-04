@@ -1,11 +1,10 @@
 import 'dart:developer';
-import 'package:dartz/dartz.dart';
 import '../../../../core/errors/failures.dart';
 import '../../../../core/utils/typedef.dart';
 import '../../../../shared/services/connectivity_service.dart';
 import '../../domain/entities/user.dart';
-import '../../domain/entities/post.dart';
-import '../../domain/entities/todo.dart';
+import '../../../home/domain/entities/post.dart';
+import '../../../home/domain/entities/todo.dart';
 import '../../domain/repositories/user_repository.dart';
 import '../datasources/user_remote_datasource.dart';
 import '../datasources/user_local_datasource.dart';

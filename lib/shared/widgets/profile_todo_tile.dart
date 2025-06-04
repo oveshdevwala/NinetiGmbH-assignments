@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import '../../features/users/domain/entities/todo.dart';
+import '../../features/home/domain/entities/todo.dart';
 
 /// A robust, non-clickable todo tile widget designed for user profile sections.
 /// This widget displays todo information in a clean, readonly format.

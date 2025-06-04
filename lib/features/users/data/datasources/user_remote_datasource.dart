@@ -2,8 +2,8 @@ import 'package:dio/dio.dart';
 import 'dart:developer';
 import '../../../../core/config/app_config.dart';
 import '../models/user_model.dart';
-import '../models/post_model.dart';
-import '../models/todo_model.dart';
+import '../../../home/data/model/post_model.dart';
+import '../../../home/data/model/todo_model.dart';
 
 abstract class UserRemoteDataSource {
   Future<List<UserModel>> getInitialUsers(); // Get first 15 users

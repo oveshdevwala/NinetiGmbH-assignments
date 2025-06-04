@@ -1,9 +1,9 @@
 import 'dart:async';
 import 'dart:developer';
-import '../../features/users/data/datasources/post_local_datasource.dart';
-import '../../features/users/data/datasources/post_remote_datasource.dart';
-import '../../features/users/data/datasources/todo_local_datasource.dart';
-import '../../features/users/data/datasources/todo_remote_datasource.dart';
+import '../../features/home/data/datasources/post_local_datasource.dart';
+import '../../features/home/data/datasources/post_remote_datasource.dart';
+import '../../features/home/data/datasources/todo_local_datasource.dart';
+import '../../features/home/data/datasources/todo_remote_datasource.dart';
 import 'connectivity_service.dart';
 
 /// Service responsible for synchronizing data between local and remote sources

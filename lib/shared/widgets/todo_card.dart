@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import '../../features/users/domain/entities/todo.dart';
+import '../../features/home/domain/entities/todo.dart';
 
 class TodoCard extends StatelessWidget {
   final Todo todo;

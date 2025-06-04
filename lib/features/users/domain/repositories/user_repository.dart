@@ -1,7 +1,7 @@
 import '../../../../core/utils/typedef.dart';
 import '../entities/user.dart';
-import '../entities/post.dart';
-import '../entities/todo.dart';
+import '../../../home/domain/entities/post.dart';
+import '../../../home/domain/entities/todo.dart';
 
 abstract class UserRepository {
   ResultFuture<List<User>> getUsers({

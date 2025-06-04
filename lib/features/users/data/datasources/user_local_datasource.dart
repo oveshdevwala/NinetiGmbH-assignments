@@ -1,6 +1,6 @@
 import 'dart:developer';
 import 'package:objectbox/objectbox.dart';
-import '../models/user_entity.dart';
+import '../../../home/data/model/user_entity.dart';
 import '../../domain/entities/user.dart';
 import '../../../../objectbox.g.dart'; // For UserEntity_
 
