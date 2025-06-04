@@ -1,97 +1,191 @@
-# Flutter User Management App
+# Flutter User Management App with BLoC & Offline-First Architecture
 
-A Flutter application showcasing user management with BLoC pattern, API integration, and clean architecture principles.
+A comprehensive Flutter application showcasing modern development practices with BLoC pattern, API integration, offline-first architecture, and clean architecture principles.
 
 ## 📱 Project Overview
 
-This application demonstrates modern Flutter development practices by building a user management system that:
+This application demonstrates advanced Flutter development by building a full-featured user management system that:
 
-- Fetches users from DummyJSON API with pagination and search functionality
-- Implements infinite scrolling for seamless user experience
-- Displays user details with their posts and todos
-- Allows creating new posts locally
-- Handles loading, success, and error states appropriately
-- Supports light/dark theme switching
-- Uses clean architecture with BLoC state management
+- **Offline-First Architecture**: Works seamlessly offline with ObjectBox local database
+- **API Integration**: Fetches data from DummyJSON API with intelligent caching
+- **User Management**: Browse users with search, pagination, and detailed profiles
+- **Posts & Todos**: View and manage user posts and todos with real-time sync
+- **My Posts**: Create, edit, and manage personal posts locally
+- **Connectivity Awareness**: Automatic sync when connection is restored
+- **Modern UI**: Material 3 design with light/dark theme support
+- **Clean Architecture**: Proper separation of concerns with SOLID principles
 
 ## 🏗️ Architecture
 
-The project follows **Clean Architecture** principles with clear separation of concerns:
+The project follows **Clean Architecture** with an **Offline-First** approach:
 
 ```
 lib/
-├── core/                     # Core application components
-│   ├── config/              # App configuration and constants
-│   ├── errors/              # Error handling classes
-│   ├── router/              # Navigation setup with GoRouter
-│   ├── theme/               # App theming configuration
-│   └── utils/               # Utilities and helper functions
-├── features/                # Feature-based modules
-│   └── users/              # User management feature
-│       ├── data/           # Data layer
-│       │   ├── datasources/ # Remote/local data sources
-│       │   ├── models/      # Data models with JSON serialization
-│       │   └── repositories/ # Repository implementations
-│       ├── domain/         # Business logic layer
-│       │   ├── entities/    # Core business objects
-│       │   └── repositories/ # Repository contracts
-│       └── presentation/   # UI layer
-│           ├── blocs/       # BLoC state management
-│           ├── pages/       # Screen widgets
-│           └── widgets/     # Feature-specific UI components
-├── shared/                 # Shared components
-│   ├── services/           # Cross-feature services
-│   └── widgets/            # Reusable UI components
-├── bootstrap.dart          # App initialization and DI setup
-└── main.dart              # Application entry point
+├── core/                           # Core application components
+│   ├── config/                     # App configuration (API URLs, timeouts)
+│   ├── errors/                     # Global error handling classes
+│   ├── router/                     # Navigation with GoRouter (Shell Navigation)
+│   ├── theme/                      # Material 3 theme configuration
+│   └── utils/                      # Utilities and helper functions
+├── features/                       # Feature-based modular architecture
+│   ├── home/                       # Home tab with posts and todos
+│   │   ├── data/
+│   │   │   ├── datasources/        # Remote (API) & Local (ObjectBox) sources
+│   │   │   ├── models/             # JSON serializable data models
+│   │   │   └── repositories/       # Repository implementations with offline support
+│   │   ├── domain/
+│   │   │   ├── entities/           # Core business objects
+│   │   │   └── repositories/       # Abstract repository contracts
+│   │   └── presentation/
+│   │       ├── blocs/              # PostsBloc, TodosBloc, ScrollCubit, PostDetailsCubit
+│   │       ├── pages/              # HomePage, PostDetailPage
+│   │       └── widgets/            # Feature-specific UI components
+│   ├── users/                      # User management with offline caching
+│   │   ├── data/
+│   │   │   ├── datasources/        # UserRemoteDataSource, UserLocalDataSource
+│   │   │   ├── models/             # User model with JSON serialization
+│   │   │   └── repositories/       # UserRepositoryOfflineImpl
+│   │   ├── domain/
+│   │   │   ├── entities/           # User entity
+│   │   │   └── repositories/       # UserRepository contract
+│   │   └── presentation/
+│   │       ├── blocs/              # UsersCubit with search and pagination
+│   │       ├── pages/              # UsersListPage
+│   │       └── widgets/            # User-specific UI components
+│   ├── my_posts/                   # Personal posts management
+│   │   ├── data/
+│   │   │   ├── datasources/        # MyPostLocalDataSource (ObjectBox)
+│   │   │   ├── models/             # MyPost model
+│   │   │   └── repositories/       # MyPostRepository implementation
+│   │   ├── domain/
+│   │   │   ├── entities/           # MyPost entity
+│   │   │   └── repositories/       # Repository contracts
+│   │   └── presentation/
+│   │       ├── blocs/              # MyPostsCubit
+│   │       ├── pages/              # MyPostsPage, CreateEditPostPage
+│   │       └── widgets/            # Post management widgets
+│   └── profile/                    # User profile feature
+│       └── presentation/
+│           ├── blocs/              # UserProfileCubit
+│           ├── pages/              # ProfilePage, FullUserProfilePage
+│           └── widgets/            # Profile-specific components
+├── shared/                         # Shared cross-feature components
+│   ├── services/                   # Core services
+│   │   ├── objectbox_service.dart  # ObjectBox database setup
+│   │   ├── connectivity_service.dart # Network connectivity monitoring
+│   │   ├── sync_service.dart       # Background sync service
+│   │   └── user_stats_service.dart # User statistics calculations
+│   └── widgets/                    # Reusable UI components
+│       ├── app_scaffold.dart       # Bottom navigation shell
+│       ├── enhanced_user_list_tile.dart
+│       ├── user_profile_tile.dart
+│       ├── todo_card.dart
+│       ├── app_search_bar.dart
+│       ├── sync_status_indicator.dart
+│       ├── loading_indicator.dart
+│       ├── app_error_widget.dart
+│       ├── user_avatar.dart
+│       ├── app_button.dart
+│       └── page_transitions.dart   # Custom page transitions
+├── objectbox.g.dart                # Generated ObjectBox code
+├── objectbox-model.json           # ObjectBox schema
+├── bootstrap.dart                  # Dependency injection and app setup
+└── main.dart                      # Application entry point
 ```
 
 ### Architecture Layers:
 
-1. **Presentation Layer**: UI components, BLoCs, and user interaction handling
+1. **Presentation Layer**: UI components, BLoCs/Cubits, and user interaction handling
 2. **Domain Layer**: Business entities, use cases, and repository contracts
-3. **Data Layer**: API integration, data models, and repository implementations
+3. **Data Layer**: API integration, local storage, and repository implementations
+4. **Core Layer**: Configuration, routing, theming, and utilities
+5. **Shared Layer**: Cross-feature services and reusable components
 
 ## 🚀 Features
 
-### Core Features
-- ✅ **User List**: Display users with avatar, name, and email
-- ✅ **Search Functionality**: Real-time search by user name
-- ✅ **Pagination**: Infinite scrolling with lazy loading
-- ✅ **User Details**: Comprehensive user information display
-- ✅ **Posts & Todos**: Fetch and display user's posts and todos
-- ✅ **Create Posts**: Add new posts locally
-- ✅ **Error Handling**: Graceful error state management
-- ✅ **Loading States**: Appropriate loading indicators
+### ✅ Implemented Core Features
 
-### Bonus Features
-- ✅ **Theme Switching**: Light/Dark mode support
-- 🔄 **Pull to Refresh**: Refresh user list (to be implemented)
-- 🔄 **Offline Caching**: Local storage with Hive (to be implemented)
+#### **Home Tab**
+- 📊 **Dashboard View**: Posts and todos overview with statistics
+- 📝 **Posts Management**: View, search, and interact with posts
+- ✅ **Todos Management**: Browse and manage todo items
+- 🔄 **Real-time Sync**: Automatic background synchronization
+- 📱 **Infinite Scrolling**: Lazy loading with scroll position restoration
+
+#### **Users Tab**
+- 👥 **User Directory**: Browse all users with avatars and basic info
+- 🔍 **Smart Search**: Real-time search by name with debouncing
+- 📄 **Pagination**: Efficient pagination with infinite scroll
+- 📱 **User Profiles**: Detailed user information with posts and todos
+- 💾 **Offline Cache**: Browse users even without internet
+
+#### **My Posts Tab**
+- ✏️ **Create Posts**: Add new posts with title and content
+- 📝 **Edit Posts**: Modify existing posts with full editor
+- 🗑️ **Delete Posts**: Remove unwanted posts
+- 💾 **Local Storage**: All posts stored locally with ObjectBox
+- 📊 **Post Statistics**: Track your posting activity
+
+#### **Profile Tab**
+- 👤 **Personal Profile**: View and manage user information
+- 📈 **Activity Stats**: Posts and todos statistics
+- 🎨 **Theme Toggle**: Switch between light and dark themes
+- ⚙️ **Settings**: App configuration and preferences
+
+### 🔄 Offline-First Features
+- **Complete Offline Support**: All features work without internet
+- **Smart Sync**: Automatic data synchronization when online
+- **Conflict Resolution**: Intelligent handling of data conflicts
+- **Background Sync**: Sync data in background when app is not active
+- **Connection Awareness**: Visual indicators for connection status
+
+### 🎨 UI/UX Features
+- **Material 3 Design**: Modern Material Design 3 components
+- **Dark/Light Theme**: System-aware theme switching
+- **Responsive Design**: Adaptive layouts for different screen sizes
+- **Smooth Animations**: Custom page transitions and loading states
+- **Accessibility**: Screen reader support and semantic labels
+- **Loading States**: Skeleton loading and shimmer effects
+- **Error Handling**: Graceful error states with retry options
 
 ## 🛠️ Tech Stack
 
-### Core Dependencies
-- **flutter_bloc**: State management with BLoC pattern
-- **dio**: HTTP client for API requests
-- **go_router**: Declarative routing
-- **equatable**: Value equality for objects
+### **State Management**
+- `flutter_bloc: ^8.1.6` - BLoC pattern for state management
+- `equatable: ^2.0.7` - Value equality for state objects
 
-### UI & UX
-- **cached_network_image**: Efficient image loading and caching
-- **shimmer**: Loading shimmer effects
+### **Network & API**
+- `dio: ^5.4.3+1` - HTTP client with interceptors and logging
+- `http: ^1.2.2` - Alternative HTTP client
+- `connectivity_plus: ^6.0.5` - Network connectivity monitoring
 
-### Storage & Caching
-- **hive**: Local database for offline caching
-- **shared_preferences**: Simple key-value storage
+### **Local Storage & Offline**
+- `objectbox: ^4.0.1` - High-performance local database
+- `objectbox_flutter_libs: ^4.0.1` - ObjectBox Flutter integration
+- `hive: ^2.2.3` - Additional local storage
+- `shared_preferences: ^2.2.3` - Simple key-value storage
 
-### Code Generation
-- **json_serializable**: JSON serialization code generation
-- **build_runner**: Build system for code generation
+### **Navigation & Routing**
+- `go_router: ^14.2.7` - Declarative routing with shell navigation
 
-### Testing
-- **bloc_test**: Testing utilities for BLoCs
-- **mocktail**: Mocking framework for testing
+### **UI & Images**
+- `cached_network_image: ^3.3.1` - Efficient image loading and caching
+- `shimmer: ^3.0.0` - Loading shimmer effects
+- `cupertino_icons: ^1.0.8` - iOS-style icons
+
+### **JSON & Serialization**
+- `json_annotation: ^4.9.0` - JSON serialization annotations
+- `json_serializable: ^6.9.0` - Code generation for JSON
+
+### **Utilities**
+- `intl: ^0.19.0` - Internationalization and date formatting
+- `dartz: ^0.10.1` - Functional programming utilities
+
+### **Development & Testing**
+- `build_runner: ^2.4.13` - Code generation runner
+- `flutter_lints: ^4.0.0` - Dart linting rules
+- `bloc_test: ^9.1.7` - Testing utilities for BLoCs
+- `mocktail: ^1.0.4` - Mocking framework for testing
 
 ## 📋 Setup Instructions
 
@@ -99,6 +193,7 @@ lib/
 - Flutter SDK (^3.5.4)
 - Dart SDK
 - IDE (VS Code, Android Studio, or IntelliJ)
+- Git
 
 ### Installation Steps
 
@@ -113,7 +208,7 @@ lib/
    flutter pub get
    ```
 
-3. **Generate code (for JSON serialization)**
+3. **Generate code (ObjectBox & JSON serialization)**
    ```bash
    flutter pub run build_runner build --delete-conflicting-outputs
    ```
@@ -127,24 +222,124 @@ lib/
 
 - **Generate code**: `flutter pub run build_runner build`
 - **Watch for changes**: `flutter pub run build_runner watch`
-- **Clean and rebuild**: `flutter clean && flutter pub get && flutter pub run build_runner build --delete-conflicting-outputs`
+- **Clean and rebuild**: 
+  ```bash
+  flutter clean && flutter pub get && flutter pub run build_runner build --delete-conflicting-outputs
+  ```
 - **Run tests**: `flutter test`
+- **Analyze code**: `flutter analyze`
 
 ## 🎯 API Integration
 
-The app integrates with [DummyJSON API](https://dummyjson.com/) for:
+The app integrates with [DummyJSON API](https://dummyjson.com/) for data:
 
-- **Users**: `GET /users` - Fetch users with pagination
-- **Search**: `GET /users/search` - Search users by name
-- **User Details**: `GET /users/{id}` - Get specific user
-- **User Posts**: `GET /posts/user/{userId}` - Get user's posts
-- **User Todos**: `GET /todos/user/{userId}` - Get user's todos
-- **Create Post**: `POST /posts/add` - Create new post
+### **Endpoints Used**
+- `GET /users` - Fetch paginated users list
+- `GET /users/search?q={query}` - Search users by name
+- `GET /users/{id}` - Get specific user details
+- `GET /posts/user/{userId}` - Get user's posts
+- `GET /todos/user/{userId}` - Get user's todos
+- `GET /posts` - Fetch all posts with pagination
+- `POST /posts/add` - Create new post (API simulation)
 
-## 🧪 Testing
+### **Offline Strategy**
+- **Cache-First**: Always try local data first
+- **Network Fallback**: Fetch from API if local data is stale
+- **Background Sync**: Sync data when network is available
+- **Conflict Resolution**: Handle data conflicts intelligently
 
-The project includes comprehensive testing:
+## 🗄️ Database Schema (ObjectBox)
 
+### **User Entity**
+```dart
+@Entity()
+class UserEntity {
+  @Id()
+  int id;
+  String firstName;
+  String lastName;
+  String email;
+  String? image;
+  DateTime? cachedAt;
+  // ... additional fields
+}
+```
+
+### **Post Entity**
+```dart
+@Entity()
+class PostEntity {
+  @Id()
+  int id;
+  String title;
+  String body;
+  int userId;
+  DateTime? cachedAt;
+  // ... additional fields
+}
+```
+
+### **MyPost Entity**
+```dart
+@Entity()
+class MyPostEntity {
+  @Id()
+  int id;
+  String title;
+  String content;
+  DateTime createdAt;
+  DateTime updatedAt;
+}
+```
+
+### **Todo Entity**
+```dart
+@Entity()
+class TodoEntity {
+  @Id()
+  int id;
+  String todo;
+  bool completed;
+  int userId;
+  DateTime? cachedAt;
+}
+```
+
+## 🔄 Navigation Structure
+
+The app uses **Shell Navigation** with GoRouter:
+
+### **Main Tabs**
+- **Home** (`/home`) - Posts and todos dashboard
+- **Users** (`/users`) - User directory with search
+- **My Posts** (`/my-posts`) - Personal posts management
+- **Profile** (`/profile`) - User profile and settings
+
+### **Detail Routes**
+- **User Profile** (`/user-profile/:userId`) - Full user details
+- **Post Detail** (`/post-detail/:postId`) - Individual post view
+- **Create Post** (`/my-posts/create`) - New post creation
+- **Edit Post** (`/my-posts/edit/:postId`) - Post editing
+
+## 🧪 Testing Strategy
+
+### **Unit Tests**
+- BLoC/Cubit state management logic
+- Repository implementations
+- Data source functionality
+- Utility functions and extensions
+
+### **Widget Tests**
+- Individual UI components
+- Page widgets and layouts
+- User interaction flows
+
+### **Integration Tests**
+- End-to-end user scenarios
+- Offline/online state transitions
+- Data synchronization flows
+
+### **Testing Commands**
 ```bash
 # Run all tests
 flutter test
@@ -153,63 +348,106 @@ flutter test
 flutter test --coverage
 
 # Run specific test file
-flutter test test/features/users/presentation/blocs/users_bloc_test.dart
+flutter test test/features/users/presentation/blocs/users_cubit_test.dart
+
+# Generate coverage report
+genhtml coverage/lcov.info -o coverage/html
 ```
 
-### Testing Strategy
-- **Unit Tests**: BLoCs, repositories, and utilities
-- **Widget Tests**: UI components and pages
-- **Integration Tests**: End-to-end user flows
+## 🎨 Design System
 
-## 🎨 Design Patterns
+### **Theme Configuration**
+- **Material 3**: Modern Material Design system
+- **Color Schemes**: Dynamic light/dark color palettes
+- **Typography**: Consistent text styles across the app
+- **Component Themes**: Customized button, card, and input styles
 
-### BLoC Pattern
-- **Events**: User actions (LoadUsers, SearchUsers, etc.)
-- **States**: UI states (loading, loaded, error)
-- **BLoCs**: Business logic and state management
+### **Custom Components**
+- **AppScaffold**: Bottom navigation shell
+- **UserAvatar**: Cached network image with fallback
+- **AppButton**: Themed button with loading states
+- **AppSearchBar**: Consistent search interface
+- **LoadingIndicator**: Customizable loading animations
+- **AppErrorWidget**: Standardized error displays
 
-### Repository Pattern
-- **Abstract repositories**: Domain contracts
-- **Concrete implementations**: Data layer implementations
-- **Dependency injection**: Loose coupling between layers
+## 📊 Performance Optimizations
 
-### Clean Architecture
-- **Separation of concerns**: Each layer has specific responsibilities
-- **Dependency inversion**: High-level modules don't depend on low-level modules
-- **Testability**: Easy to test each layer independently
+### **Image Loading**
+- `CachedNetworkImage` for efficient image caching
+- Placeholder and error widgets
+- Memory and disk cache management
 
-## 🔧 Configuration
+### **List Performance**
+- `ListView.builder` for dynamic lists
+- Infinite scroll with pagination
+- Scroll position restoration
 
-### Environment Setup
-- **Base URL**: Configured in `lib/core/config/app_config.dart`
-- **API timeouts**: Configurable request timeouts
-- **Pagination**: Adjustable page sizes
+### **State Management**
+- Selective BLoC rebuilds with `BlocSelector`
+- Efficient state updates with `copyWith`
+- Debounced search to reduce API calls
 
-### Theme Configuration
-- **Light/Dark themes**: Defined in `lib/core/theme/app_theme.dart`
-- **Material 3**: Modern Material Design components
-- **Responsive design**: Adaptive layouts for different screen sizes
+### **Database Optimization**
+- ObjectBox indexes for fast queries
+- Lazy loading of relationships
+- Efficient data serialization
 
-## 📱 Screenshots
+## 🔒 Security & Best Practices
 
-*Screenshots will be added once UI implementation is complete*
+### **Code Quality**
+- Consistent naming conventions
+- Comprehensive error handling
+- Type-safe null safety implementation
+- SOLID principles adherence
+
+### **Data Handling**
+- Input validation and sanitization
+- Secure local storage
+- Network request timeouts
+- Error boundary implementations
+
+## 🚀 Future Enhancements
+
+### **Planned Features**
+- 🔔 **Push Notifications**: Real-time updates
+- 📱 **Deep Linking**: Direct navigation to content
+- 🌐 **Internationalization**: Multi-language support
+- 📊 **Analytics**: User behavior tracking
+- 🔐 **Authentication**: User login system
+- 💾 **Cloud Sync**: Cross-device synchronization
+
+### **Technical Improvements**
+- **Testing**: Increase test coverage to 90%+
+- **Performance**: Implement advanced caching strategies
+- **Accessibility**: Enhanced screen reader support
+- **CI/CD**: Automated testing and deployment pipelines
 
 ## 🤝 Contributing
 
 1. Fork the repository
 2. Create a feature branch: `git checkout -b feature/amazing-feature`
-3. Commit changes: `git commit -m 'Add amazing feature'`
-4. Push to branch: `git push origin feature/amazing-feature`
-5. Open a Pull Request
+3. Make your changes following the project conventions
+4. Write/update tests for new functionality
+5. Commit changes: `git commit -m 'Add amazing feature'`
+6. Push to branch: `git push origin feature/amazing-feature`
+7. Open a Pull Request with detailed description
+
+### **Code Style Guidelines**
+- Follow Dart style guide (80 character line limit)
+- Use trailing commas for better diffs
+- Write comprehensive documentation
+- Maintain test coverage above 80%
 
 ## 📄 License
 
-This project is created for assessment purposes.
+This project is created for assessment purposes and demonstrates modern Flutter development practices.
 
 ## 📞 Contact
 
-For questions or clarifications, please contact [your-email@example.com]
+For questions, suggestions, or technical discussions about this project, please reach out through the repository's issue tracker.
 
 ---
 
-**Built with ❤️ using Flutter and BLoC**
+**Built with ❤️ using Flutter, BLoC, and Clean Architecture**
+
+*Showcasing offline-first architecture, modern UI/UX, and production-ready code quality*
