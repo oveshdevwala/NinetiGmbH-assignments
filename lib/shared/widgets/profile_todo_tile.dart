@@ -48,7 +48,7 @@ class ProfileTodoTile extends StatelessWidget {
 
     return Container(
       height: height,
-      margin: margin ?? const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+      margin: margin ?? const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
       padding: padding ?? const EdgeInsets.all(16),
       decoration: BoxDecoration(
         color: backgroundColor,

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:go_router/go_router.dart';
 import '../../features/users/domain/entities/user.dart';
+import '../../core/router/app_router.dart';
 
 class EnhancedUserListTile extends StatelessWidget {
   final User user;
@@ -47,7 +48,7 @@ class EnhancedUserListTile extends StatelessWidget {
         color: Colors.transparent,
         borderRadius: BorderRadius.circular(16),
         child: InkWell(
-          onTap: onTap ?? () => context.go('/user-profile/${user.id}'),
+          onTap: onTap ?? () => context.goToUserProfile(user.id),
           borderRadius: BorderRadius.circular(16),
           child: Padding(
             padding: const EdgeInsets.all(16),
@@ -218,7 +219,7 @@ class EnhancedUserListTile extends StatelessWidget {
                     borderRadius: BorderRadius.circular(12),
                     child: InkWell(
                       borderRadius: BorderRadius.circular(12),
-                      onTap: () => context.go('/user-profile/${user.id}'),
+                      onTap: () => context.goToUserProfile(user.id),
                       child: Padding(
                         padding: const EdgeInsets.symmetric(
                           horizontal: 16,

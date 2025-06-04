@@ -411,45 +411,90 @@ class AppRouter {
 
 /// Extension methods for convenient navigation
 extension GoRouterExtensions on BuildContext {
-  /// Safe pop that handles edge cases
+  /// Enhanced safe pop that properly handles navigation stack
   void safePop() {
     try {
       final router = GoRouter.of(this);
       final routerDelegate = router.routerDelegate;
+      final currentLocation = GoRouterState.of(this).uri.toString();
 
-      // Check if we can pop using GoRouter's canPop method
-      if (routerDelegate.canPop()) {
-        pop();
+      dev.log('SafePop called from: $currentLocation', name: 'Navigation');
+
+      // Check if we can pop using the navigator's canPop method
+      final navigator = Navigator.of(this);
+      if (navigator.canPop()) {
+        dev.log('Using Navigator.pop()', name: 'Navigation');
+        // Use Flutter's Navigator.pop() for proper stack management
+        navigator.pop();
       } else {
-        // If we can't pop, go to the appropriate fallback
-        final currentLocation = GoRouterState.of(this).uri.toString();
-
-        // If we're on a detail page, go back to the appropriate tab
-        if (currentLocation.contains('/post-detail')) {
-          go(AppPaths.users); // Go back to users tab
-        } else if (currentLocation.contains('/user-profile')) {
-          go(AppPaths.users); // Go back to users tab (fixed from home)
+        // If we can't pop, check if we can use GoRouter's canPop
+        if (routerDelegate.canPop()) {
+          dev.log('Using GoRouter.pop()', name: 'Navigation');
+          pop();
         } else {
-          // Default fallback
-          go(AppPaths.home);
+          // As a last resort, navigate to appropriate fallback based on current context
+          dev.log('Using fallback navigation', name: 'Navigation');
+          _handleFallbackNavigation();
         }
       }
     } catch (e) {
-      // Fallback in case of any navigation error
+      dev.log('Primary navigation failed: $e', name: 'Navigation');
+      _handleFallbackNavigation();
+    }
+  }
+
+  /// Handle fallback navigation when normal pop fails
+  void _handleFallbackNavigation() {
+    try {
+      final currentLocation = GoRouterState.of(this).uri.toString();
+
+      // Navigate to appropriate fallback based on current location
+      if (currentLocation.contains('/user-profile')) {
+        // If we're on user profile, go back to users tab
+        go(AppPaths.users);
+      } else if (currentLocation.contains('/post-detail')) {
+        // If we're on post detail, go back to users tab (where posts are shown)
+        go(AppPaths.users);
+      } else if (currentLocation.contains('/my-posts')) {
+        // If we're on my posts detail/edit, go back to my posts tab
+        go(AppPaths.myPosts);
+      } else {
+        // Default fallback to home
+        go(AppPaths.home);
+      }
+    } catch (fallbackError) {
+      dev.log('Fallback navigation failed: $fallbackError', name: 'Navigation');
+      // Last resort - try to go to home
       try {
         go(AppPaths.home);
-      } catch (fallbackError) {
-        // Last resort - do nothing to prevent crash
-        dev.log('Navigation error: $e, Fallback error: $fallbackError',
-            name: 'Navigation');
+      } catch (e) {
+        dev.log('Final fallback to home failed: $e', name: 'Navigation');
+        // Do nothing to prevent crash
       }
     }
   }
 
-  /// Navigate to post detail using named route with error handling
+  /// Navigate to post detail using push for proper stack management
   void goToPostDetail(Post post) {
     try {
-      goNamed(
+      // Check if we're currently on a profile page - if so, don't navigate to post
+      final currentLocation = GoRouterState.of(this).uri.toString();
+      if (currentLocation.contains('/user-profile/')) {
+        // On a profile page, don't navigate to post details
+        dev.log('On profile page, preventing post detail navigation',
+            name: 'Navigation');
+        return;
+      }
+
+      // Check if we're already on the same post detail page
+      if (currentLocation.contains('/post-detail/${post.id}')) {
+        // Already on this post's detail page, don't push again
+        dev.log('Already on post detail ${post.id}, skipping navigation',
+            name: 'Navigation');
+        return;
+      }
+
+      pushNamed(
         AppRoutes.postDetail,
         pathParameters: {'postId': post.id.toString()},
         extra: post,
@@ -460,10 +505,19 @@ extension GoRouterExtensions on BuildContext {
     }
   }
 
-  /// Navigate to user profile using named route with error handling
+  /// Navigate to user profile using push for proper stack management
   void goToUserProfile(int userId) {
     try {
-      goNamed(
+      // Check if we're already on the same user profile page
+      final currentLocation = GoRouterState.of(this).uri.toString();
+      if (currentLocation.contains('/user-profile/$userId')) {
+        // Already on this user's profile page, don't push again
+        dev.log('Already on user profile $userId, skipping navigation',
+            name: 'Navigation');
+        return;
+      }
+
+      pushNamed(
         AppRoutes.userProfile,
         pathParameters: {'userId': userId.toString()},
       );
@@ -473,10 +527,19 @@ extension GoRouterExtensions on BuildContext {
     }
   }
 
-  /// Navigate to full user profile using named route with error handling
+  /// Navigate to full user profile using push for proper stack management
   void goToFullUserProfile(int userId) {
     try {
-      goNamed(
+      // Check if we're already on the same full user profile page
+      final currentLocation = GoRouterState.of(this).uri.toString();
+      if (currentLocation.contains('/full-user-profile/$userId')) {
+        // Already on this user's full profile page, don't push again
+        dev.log('Already on full user profile $userId, skipping navigation',
+            name: 'Navigation');
+        return;
+      }
+
+      pushNamed(
         AppRoutes.fullUserProfile,
         pathParameters: {'userId': userId.toString()},
       );
@@ -486,7 +549,7 @@ extension GoRouterExtensions on BuildContext {
     }
   }
 
-  /// Navigate to tabs using named routes with error handling
+  /// Navigate to tabs using go (replace navigation)
   void goToHome() {
     try {
       goNamed(AppRoutes.home);
@@ -534,6 +597,28 @@ extension GoRouterExtensions on BuildContext {
     }
   }
 
+  /// Check if currently on a specific user profile route
+  bool isOnUserProfile(int userId) {
+    try {
+      final currentLocation = GoRouterState.of(this).uri.toString();
+      return currentLocation.contains('/user-profile/$userId');
+    } catch (e) {
+      dev.log('Error checking user profile route: $e', name: 'Navigation');
+      return false;
+    }
+  }
+
+  /// Check if currently on a specific post detail route
+  bool isOnPostDetail(int postId) {
+    try {
+      final currentLocation = GoRouterState.of(this).uri.toString();
+      return currentLocation.contains('/post-detail/$postId');
+    } catch (e) {
+      dev.log('Error checking post detail route: $e', name: 'Navigation');
+      return false;
+    }
+  }
+
   /// Navigate with custom transition with error handling
   void pushWithTransition(
     String path, {
@@ -546,6 +631,28 @@ extension GoRouterExtensions on BuildContext {
     } catch (e) {
       dev.log('Error with push transition: $e', name: 'Navigation');
       safePop();
+    }
+  }
+
+  /// Check if we can go back in the navigation stack
+  bool canGoBack() {
+    try {
+      final navigator = Navigator.of(this);
+      return navigator.canPop();
+    } catch (e) {
+      dev.log('Error checking if can go back: $e', name: 'Navigation');
+      return false;
+    }
+  }
+
+  /// Get the number of routes in the navigation stack
+  int get routeStackLength {
+    try {
+      final navigator = Navigator.of(this);
+      return (navigator as dynamic).widget.pages?.length ?? 0;
+    } catch (e) {
+      dev.log('Error getting route stack length: $e', name: 'Navigation');
+      return 0;
     }
   }
 }

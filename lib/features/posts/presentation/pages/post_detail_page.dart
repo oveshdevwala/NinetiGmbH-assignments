@@ -1,3 +1,4 @@
+import 'package:assignments/features/users/domain/entities/user.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
@@ -207,8 +208,7 @@ class _PostDetailView extends StatelessWidget {
     );
   }
 
-  Widget _buildAuthorSection(
-      BuildContext context, ThemeData theme, dynamic user) {
+  Widget _buildAuthorSection(BuildContext context, ThemeData theme, User user) {
     final colorScheme = theme.colorScheme;
 
     return Column(
@@ -305,7 +305,7 @@ class _PostDetailView extends StatelessWidget {
                 ),
                 child: InkWell(
                   onTap: () {
-                    context.go('/user-profile/${user.id}');
+                    context.goToUserProfile(user.id);
                   },
                   borderRadius: BorderRadius.circular(20),
                   child: Row(

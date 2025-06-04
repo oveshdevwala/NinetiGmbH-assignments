@@ -4,10 +4,9 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../../../core/router/app_router.dart';
 import '../../domain/repositories/user_repository.dart';
 import '../blocs/user_profile_cubit.dart';
-import '../../../../shared/widgets/todo_card.dart';
 import '../../../../shared/widgets/profile_todo_tile.dart';
 import '../../../../shared/widgets/loading_indicator.dart';
-import '../../../../shared/widgets/floating_scroll_buttons.dart';
+import '../../../../shared/widgets/user_avatar.dart';
 
 class FullUserProfilePage extends StatelessWidget {
   final int userId;
@@ -35,77 +34,55 @@ class _FullUserProfileView extends StatefulWidget {
 
 class _FullUserProfileViewState extends State<_FullUserProfileView>
     with TickerProviderStateMixin {
-  late AnimationController _headerAnimationController;
-  late AnimationController _contentAnimationController;
-  late Animation<double> _headerSlideAnimation;
-  late Animation<double> _headerFadeAnimation;
-  late Animation<double> _contentSlideAnimation;
-  late Animation<double> _contentFadeAnimation;
+  late TabController _tabController;
+  late AnimationController _animationController;
+  late Animation<double> _fadeAnimation;
+  late Animation<Offset> _slideAnimation;
 
   @override
   void initState() {
     super.initState();
+    _tabController = TabController(length: 3, vsync: this);
     _setupAnimations();
   }
 
   void _setupAnimations() {
-    _headerAnimationController = AnimationController(
-      duration: const Duration(milliseconds: 800),
+    _animationController = AnimationController(
+      duration: const Duration(milliseconds: 600),
       vsync: this,
     );
 
-    _contentAnimationController = AnimationController(
-      duration: const Duration(milliseconds: 1000),
-      vsync: this,
-    );
-
-    _headerSlideAnimation = Tween<double>(
-      begin: -100.0,
-      end: 0.0,
-    ).animate(CurvedAnimation(
-      parent: _headerAnimationController,
-      curve: Curves.easeOutCubic,
-    ));
-
-    _headerFadeAnimation = Tween<double>(
+    _fadeAnimation = Tween<double>(
       begin: 0.0,
       end: 1.0,
     ).animate(CurvedAnimation(
-      parent: _headerAnimationController,
-      curve: const Interval(0.3, 1.0, curve: Curves.easeOut),
+      parent: _animationController,
+      curve: Curves.easeOut,
     ));
 
-    _contentSlideAnimation = Tween<double>(
-      begin: 50.0,
-      end: 0.0,
+    _slideAnimation = Tween<Offset>(
+      begin: const Offset(0, 0.3),
+      end: Offset.zero,
     ).animate(CurvedAnimation(
-      parent: _contentAnimationController,
+      parent: _animationController,
       curve: Curves.easeOutCubic,
-    ));
-
-    _contentFadeAnimation = Tween<double>(
-      begin: 0.0,
-      end: 1.0,
-    ).animate(CurvedAnimation(
-      parent: _contentAnimationController,
-      curve: const Interval(0.2, 1.0, curve: Curves.easeOut),
     ));
   }
 
   @override
   void dispose() {
-    _headerAnimationController.dispose();
-    _contentAnimationController.dispose();
+    _animationController.dispose();
+    _tabController.dispose();
     super.dispose();
   }
 
   void _startAnimations() {
-    _headerAnimationController.forward();
-    Future.delayed(const Duration(milliseconds: 300), () {
-      if (mounted) {
-        _contentAnimationController.forward();
-      }
-    });
+    _animationController.forward();
+  }
+
+  String _getInitials(String firstName, String lastName) {
+    return '${firstName.isNotEmpty ? firstName[0] : ''}${lastName.isNotEmpty ? lastName[0] : ''}'
+        .toUpperCase();
   }
 
   @override
@@ -142,7 +119,7 @@ class _FullUserProfileViewState extends State<_FullUserProfileView>
             }
 
             // Start animations when user data is loaded
-            if (state.user != null && !_headerAnimationController.isCompleted) {
+            if (state.user != null && !_animationController.isCompleted) {
               _startAnimations();
             }
           },
@@ -155,156 +132,167 @@ class _FullUserProfileViewState extends State<_FullUserProfileView>
               return _buildErrorScreen(theme, colorScheme);
             }
 
-            return Stack(
-              children: [
-                DefaultTabController(
-                  length: 3,
-                  child: NestedScrollView(
-                    headerSliverBuilder: (context, innerBoxIsScrolled) {
-                      return [
-                        // Enhanced Header
-                        SliverToBoxAdapter(
-                          child: AnimatedBuilder(
-                            animation: _headerAnimationController,
-                            builder: (context, child) {
-                              return Transform.translate(
-                                offset: Offset(0, _headerSlideAnimation.value),
-                                child: Opacity(
-                                  opacity: _headerFadeAnimation.value,
-                                  child: _buildEnhancedHeader(
-                                      context, state.user!, theme, colorScheme),
-                                ),
-                              );
-                            },
-                          ),
-                        ),
-
-                        // Animated Stats Section
-                        SliverToBoxAdapter(
-                          child: AnimatedBuilder(
-                            animation: _contentAnimationController,
-                            builder: (context, child) {
-                              return Transform.translate(
-                                offset: Offset(0, _contentSlideAnimation.value),
-                                child: Opacity(
-                                  opacity: _contentFadeAnimation.value,
-                                  child: _buildStatsSection(
-                                      context, state, theme, colorScheme),
-                                ),
-                              );
-                            },
-                          ),
-                        ),
-
-                        // User Details Card
-                        SliverToBoxAdapter(
-                          child: AnimatedBuilder(
-                            animation: _contentAnimationController,
-                            builder: (context, child) {
-                              return Transform.translate(
-                                offset: Offset(
-                                    0, _contentSlideAnimation.value * 0.7),
-                                child: Opacity(
-                                  opacity: _contentFadeAnimation.value,
-                                  child: _buildUserDetailsCard(
-                                      context, state.user!, theme, colorScheme),
-                                ),
-                              );
-                            },
-                          ),
-                        ),
-
-                        // Enhanced Tab Bar
-                        SliverToBoxAdapter(
-                          child: AnimatedBuilder(
-                            animation: _contentAnimationController,
-                            builder: (context, child) {
-                              return Transform.translate(
-                                offset: Offset(
-                                    0, _contentSlideAnimation.value * 0.5),
-                                child: Opacity(
-                                  opacity: _contentFadeAnimation.value,
-                                  child:
-                                      _buildEnhancedTabBar(theme, colorScheme),
-                                ),
-                              );
-                            },
-                          ),
-                        ),
-                      ];
-                    },
-                    body: TabBarView(
-                      children: [
-                        _buildPostsTab(context, state, theme),
-                        _buildTodosTab(context, state, theme),
-                        _buildAboutTab(context, state.user!, theme),
-                      ],
-                    ),
-                  ),
-                ),
-
-                // Floating Scroll Buttons
-                const Positioned(
-                  bottom: 45,
-                  right: 16,
-                  child: FloatingScrollButtons(),
-                ),
-              ],
-            );
+            return _buildProfileView(context, state, theme, colorScheme);
           },
         ),
       ),
     );
   }
 
-  Widget _buildLoadingScreen(ThemeData theme, ColorScheme colorScheme) {
-    return SafeArea(
-      child: Column(
-        children: [
-          // Loading Header
-          Container(
-            width: double.infinity,
-            height: 280,
-            decoration: BoxDecoration(
-              gradient: LinearGradient(
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
-                colors: [
-                  colorScheme.primary.withOpacity(0.1),
-                  colorScheme.secondary.withOpacity(0.1),
-                  colorScheme.tertiary.withOpacity(0.1),
-                ],
-              ),
-            ),
-            child: const Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                LoadingIndicator(),
-                SizedBox(height: 16),
-                Text('Loading profile...'),
+  Widget _buildProfileView(BuildContext context, UserProfileState state,
+      ThemeData theme, ColorScheme colorScheme) {
+    return Column(
+      children: [
+        // Enhanced AppBar with user info
+        Container(
+          decoration: BoxDecoration(
+            gradient: LinearGradient(
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+              colors: [
+                colorScheme.primary.withOpacity(0.1),
+                colorScheme.secondary.withOpacity(0.1),
               ],
             ),
           ),
-
-          // Loading Content
-          Expanded(
-            child: ListView.builder(
+          child: SafeArea(
+            bottom: false,
+            child: Padding(
               padding: const EdgeInsets.all(16),
-              itemCount: 5,
-              itemBuilder: (context, index) {
-                return Container(
-                  margin: const EdgeInsets.only(bottom: 16),
-                  height: 120,
-                  decoration: BoxDecoration(
-                    color: colorScheme.surfaceContainerHighest.withOpacity(0.3),
-                    borderRadius: BorderRadius.circular(16),
+              child: Row(
+                children: [
+                  Container(
+                    decoration: BoxDecoration(
+                      color: colorScheme.surface.withOpacity(0.9),
+                      shape: BoxShape.circle,
+                      boxShadow: [
+                        BoxShadow(
+                          color: colorScheme.shadow.withOpacity(0.1),
+                          blurRadius: 8,
+                          offset: const Offset(0, 2),
+                        ),
+                      ],
+                    ),
+                    child: IconButton(
+                      icon: Icon(
+                        Icons.arrow_back,
+                        color: colorScheme.onSurface,
+                      ),
+                      onPressed: () => context.safePop(),
+                    ),
                   ),
-                  child: const Center(child: LoadingIndicator()),
-                );
-              },
+                  const SizedBox(width: 16),
+                  // User Avatar in AppBar
+                  Hero(
+                    tag: 'user_avatar_${state.user!.id}',
+                    child: UserAvatar(
+                      imageUrl: state.user!.image,
+                      initials: _getInitials(
+                        state.user!.firstName,
+                        state.user!.lastName,
+                      ),
+                      size: 40,
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  // User Name and Username
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Text(
+                          '${state.user!.firstName} ${state.user!.lastName}',
+                          style: theme.textTheme.titleLarge?.copyWith(
+                            fontWeight: FontWeight.bold,
+                            color: colorScheme.onSurface,
+                          ),
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                        Text(
+                          '@${state.user!.username}',
+                          style: theme.textTheme.bodyMedium?.copyWith(
+                            color: colorScheme.primary,
+                            fontWeight: FontWeight.w500,
+                          ),
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
             ),
           ),
-        ],
+        ),
+
+        // Tab Bar
+        Container(
+          decoration: BoxDecoration(
+            color: colorScheme.surface,
+            boxShadow: [
+              BoxShadow(
+                color: colorScheme.shadow.withOpacity(0.1),
+                blurRadius: 4,
+                offset: const Offset(0, 2),
+              ),
+            ],
+          ),
+          child: TabBar(
+            controller: _tabController,
+            labelColor: colorScheme.primary,
+            unselectedLabelColor: colorScheme.onSurface.withOpacity(0.6),
+            indicatorColor: colorScheme.primary,
+            indicatorWeight: 3,
+            dividerColor: Colors.transparent,
+            tabs: const [
+              Tab(
+                icon: Icon(Icons.person_outline),
+                text: 'About',
+              ),
+              Tab(
+                icon: Icon(Icons.article_outlined),
+                text: 'Posts',
+              ),
+              Tab(
+                icon: Icon(Icons.checklist_outlined),
+                text: 'Todos',
+              ),
+            ],
+          ),
+        ),
+
+        // Tab Content
+        Expanded(
+          child: TabBarView(
+            controller: _tabController,
+            children: [
+              _buildAboutTab(context, state.user!, theme),
+              _buildPostsTab(context, state, theme),
+              _buildTodosTab(context, state, theme),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildLoadingScreen(ThemeData theme, ColorScheme colorScheme) {
+    return SafeArea(
+      child: Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            const LoadingIndicator(),
+            const SizedBox(height: 16),
+            Text(
+              'Loading profile...',
+              style: theme.textTheme.bodyLarge?.copyWith(
+                color: colorScheme.onSurface.withOpacity(0.7),
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -374,393 +362,311 @@ class _FullUserProfileViewState extends State<_FullUserProfileView>
     );
   }
 
-  Widget _buildEnhancedHeader(BuildContext context, dynamic user,
-      ThemeData theme, ColorScheme colorScheme) {
-    return Container(
-      width: double.infinity,
-      decoration: BoxDecoration(
-        gradient: LinearGradient(
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-          colors: [
-            colorScheme.primary.withOpacity(0.1),
-            colorScheme.secondary.withOpacity(0.1),
-            colorScheme.tertiary.withOpacity(0.1),
-          ],
-        ),
-      ),
-      child: Stack(
-        children: [
-          // Glassmorphism overlay
-          Container(
+  Widget _buildPostsTab(
+      BuildContext context, UserProfileState state, ThemeData theme) {
+    if (state.isLoadingPosts) {
+      return ListView.builder(
+        padding: const EdgeInsets.all(16),
+        itemCount: 5,
+        itemBuilder: (context, index) {
+          return Container(
+            margin: const EdgeInsets.only(bottom: 16),
+            height: 120,
             decoration: BoxDecoration(
-              gradient: LinearGradient(
-                begin: Alignment.topCenter,
-                end: Alignment.bottomCenter,
-                colors: [
-                  colorScheme.surface.withOpacity(0.1),
-                  colorScheme.surface.withOpacity(0.3),
+              color: Colors.grey.withOpacity(0.2),
+              borderRadius: BorderRadius.circular(16),
+            ),
+            child: const Center(child: LoadingIndicator()),
+          );
+        },
+      );
+    }
+
+    if (state.posts.isEmpty) {
+      return _buildEmptyState(
+        icon: Icons.article_outlined,
+        title: 'No posts yet',
+        subtitle: 'This user hasn\'t shared any posts.',
+        theme: theme,
+      );
+    }
+
+    return RefreshIndicator(
+      onRefresh: () async {
+        context.read<UserProfileCubit>().loadUserProfile(state.user!.id);
+      },
+      child: ListView.builder(
+        padding: const EdgeInsets.all(16),
+        itemCount: state.posts.length,
+        itemBuilder: (context, index) {
+          final post = state.posts[index];
+          return Padding(
+            padding: EdgeInsets.only(
+              bottom: index == state.posts.length - 1 ? 0 : 16,
+            ),
+            child: PostCard(
+              post: post,
+              onTap: () {
+                context.goToPostDetail(post);
+              },
+            ),
+          );
+        },
+      ),
+    );
+  }
+
+  Widget _buildTodosTab(
+      BuildContext context, UserProfileState state, ThemeData theme) {
+    if (state.isLoadingTodos) {
+      return ListView.builder(
+        padding: const EdgeInsets.all(16),
+        itemCount: 5,
+        itemBuilder: (context, index) {
+          return Container(
+            margin: const EdgeInsets.only(bottom: 16),
+            height: 80,
+            decoration: BoxDecoration(
+              color: Colors.grey.withOpacity(0.2),
+              borderRadius: BorderRadius.circular(16),
+            ),
+            child: const Center(child: LoadingIndicator()),
+          );
+        },
+      );
+    }
+
+    if (state.todos.isEmpty) {
+      return _buildEmptyState(
+        icon: Icons.task_outlined,
+        title: 'No todos found',
+        subtitle: 'This user hasn\'t created any todos.',
+        theme: theme,
+      );
+    }
+
+    return RefreshIndicator(
+      onRefresh: () async {
+        context.read<UserProfileCubit>().loadUserProfile(state.user!.id);
+      },
+      child: ListView.builder(
+        padding: const EdgeInsets.all(16),
+        itemCount: state.todos.length,
+        itemBuilder: (context, index) {
+          final todo = state.todos[index];
+          return Padding(
+            padding: EdgeInsets.only(
+              bottom: index == state.todos.length - 1 ? 0 : 8,
+            ),
+            child: ProfileTodoTile(
+              todo: todo,
+            ),
+          );
+        },
+      ),
+    );
+  }
+
+  Widget _buildAboutTab(BuildContext context, dynamic user, ThemeData theme) {
+    final colorScheme = theme.colorScheme;
+
+    return RefreshIndicator(
+      onRefresh: () async {
+        context.read<UserProfileCubit>().loadUserProfile(user.id);
+      },
+      child: SingleChildScrollView(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          children: [
+            // Contact Information
+            Container(
+              padding: const EdgeInsets.all(20),
+              decoration: BoxDecoration(
+                color: colorScheme.surface,
+                borderRadius: BorderRadius.circular(16),
+                border: Border.all(
+                  color: colorScheme.outline.withOpacity(0.1),
+                ),
+                boxShadow: [
+                  BoxShadow(
+                    color: colorScheme.shadow.withOpacity(0.08),
+                    blurRadius: 12,
+                    offset: const Offset(0, 4),
+                  ),
                 ],
               ),
-            ),
-          ),
-
-          SafeArea(
-            child: Padding(
-              padding: const EdgeInsets.all(24),
               child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  // Navigation and actions
-                  Row(
-                    children: [
-                      Container(
-                        decoration: BoxDecoration(
-                          color: colorScheme.surface.withOpacity(0.2),
-                          shape: BoxShape.circle,
-                          boxShadow: [
-                            BoxShadow(
-                              color: colorScheme.shadow.withOpacity(0.1),
-                              blurRadius: 8,
-                              offset: const Offset(0, 2),
-                            ),
-                          ],
-                        ),
-                        child: IconButton(
-                          onPressed: () => context.safePop(),
-                          icon: Icon(
-                            Icons.arrow_back,
-                            color: colorScheme.onSurface,
-                          ),
-                        ),
-                      ),
-                      const Spacer(),
-                      Container(
-                        decoration: BoxDecoration(
-                          color: colorScheme.surface.withOpacity(0.2),
-                          shape: BoxShape.circle,
-                          boxShadow: [
-                            BoxShadow(
-                              color: colorScheme.shadow.withOpacity(0.1),
-                              blurRadius: 8,
-                              offset: const Offset(0, 2),
-                            ),
-                          ],
-                        ),
-                        child: IconButton(
-                          onPressed: () {
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              const SnackBar(
-                                content: Text('Profile shared!'),
-                                behavior: SnackBarBehavior.floating,
-                              ),
-                            );
-                          },
-                          icon: Icon(
-                            Icons.share,
-                            color: colorScheme.onSurface,
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 24),
-
-                  // Enhanced profile image with hero animation
-                  Hero(
-                    tag: 'user_avatar_${user.id}',
-                    child: Container(
-                      padding: const EdgeInsets.all(6),
-                      decoration: BoxDecoration(
-                        shape: BoxShape.circle,
-                        gradient: LinearGradient(
-                          colors: [
-                            colorScheme.primary.withOpacity(0.3),
-                            colorScheme.secondary.withOpacity(0.3),
-                          ],
-                        ),
-                        boxShadow: [
-                          BoxShadow(
-                            color: colorScheme.primary.withOpacity(0.3),
-                            blurRadius: 20,
-                            offset: const Offset(0, 10),
-                          ),
-                        ],
-                      ),
-                      child: CircleAvatar(
-                        radius: 56,
-                        backgroundColor: colorScheme.surface,
-                        backgroundImage: user.image.isNotEmpty
-                            ? NetworkImage(user.image)
-                            : null,
-                        child: user.image.isEmpty
-                            ? Text(
-                                user.firstName[0].toUpperCase(),
-                                style: theme.textTheme.headlineLarge?.copyWith(
-                                  color: colorScheme.primary,
-                                  fontWeight: FontWeight.bold,
-                                ),
-                              )
-                            : null,
-                      ),
-                    ),
-                  ),
-                  const SizedBox(height: 20),
-
-                  // User name with enhanced styling
                   Text(
-                    '${user.firstName} ${user.lastName}',
-                    style: theme.textTheme.headlineMedium?.copyWith(
+                    'Contact Information',
+                    style: theme.textTheme.titleLarge?.copyWith(
                       fontWeight: FontWeight.bold,
                       color: colorScheme.onSurface,
                     ),
-                    textAlign: TextAlign.center,
                   ),
-                  const SizedBox(height: 6),
-
-                  // Username with enhanced styling
-                  Container(
-                    padding:
-                        const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                    decoration: BoxDecoration(
-                      color: colorScheme.primaryContainer.withOpacity(0.3),
-                      borderRadius: BorderRadius.circular(20),
-                    ),
-                    child: Text(
-                      '@${user.username}',
-                      style: theme.textTheme.bodyLarge?.copyWith(
-                        color: colorScheme.primary,
-                        fontWeight: FontWeight.w600,
-                      ),
-                    ),
-                  ),
-
-                  // Company info if available
-                  if (user.company != null) ...[
+                  const SizedBox(height: 16),
+                  if (user.email.isNotEmpty) ...[
+                    _buildDetailRow(Icons.email_outlined, 'Email', user.email,
+                        theme, colorScheme),
                     const SizedBox(height: 12),
-                    Container(
-                      padding: const EdgeInsets.symmetric(
-                          horizontal: 16, vertical: 8),
-                      decoration: BoxDecoration(
-                        color: colorScheme.surface.withOpacity(0.8),
-                        borderRadius: BorderRadius.circular(16),
-                        border: Border.all(
-                          color: colorScheme.outline.withOpacity(0.2),
-                        ),
-                      ),
-                      child: Column(
-                        children: [
-                          Text(
-                            user.company!.title,
-                            style: theme.textTheme.bodyLarge?.copyWith(
-                              fontWeight: FontWeight.w600,
-                              color: colorScheme.onSurface,
-                            ),
-                            textAlign: TextAlign.center,
-                          ),
-                          Text(
-                            user.company!.name,
-                            style: theme.textTheme.bodyMedium?.copyWith(
-                              color: colorScheme.onSurface.withOpacity(0.7),
-                            ),
-                            textAlign: TextAlign.center,
-                          ),
-                        ],
-                      ),
+                  ],
+                  if (user.phone.isNotEmpty) ...[
+                    _buildDetailRow(Icons.phone_outlined, 'Phone', user.phone,
+                        theme, colorScheme),
+                    const SizedBox(height: 12),
+                  ],
+                  if (user.address != null) ...[
+                    _buildDetailRow(
+                      Icons.location_on_outlined,
+                      'Location',
+                      '${user.address!.city}, ${user.address!.country}',
+                      theme,
+                      colorScheme,
                     ),
                   ],
                 ],
               ),
             ),
-          ),
-        ],
-      ),
-    );
-  }
 
-  Widget _buildStatsSection(BuildContext context, UserProfileState state,
-      ThemeData theme, ColorScheme colorScheme) {
-    final completedTodos = state.todos.where((todo) => todo.completed).length;
-
-    return Container(
-      margin: const EdgeInsets.all(16),
-      child: Row(
-        children: [
-          Expanded(
-            child: _buildStatCard(
-              context,
-              'Posts',
-              state.posts.length.toString(),
-              Icons.article_outlined,
-              colorScheme.primary,
-              theme,
-              colorScheme,
-            ),
-          ),
-          const SizedBox(width: 12),
-          Expanded(
-            child: _buildStatCard(
-              context,
-              'Todos',
-              state.todos.length.toString(),
-              Icons.task_outlined,
-              colorScheme.secondary,
-              theme,
-              colorScheme,
-            ),
-          ),
-          const SizedBox(width: 12),
-          Expanded(
-            child: _buildStatCard(
-              context,
-              'Completed',
-              completedTodos.toString(),
-              Icons.check_circle_outline,
-              colorScheme.tertiary,
-              theme,
-              colorScheme,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildStatCard(
-      BuildContext context,
-      String label,
-      String value,
-      IconData icon,
-      Color accentColor,
-      ThemeData theme,
-      ColorScheme colorScheme) {
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        gradient: LinearGradient(
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-          colors: [
-            accentColor.withOpacity(0.1),
-            accentColor.withOpacity(0.05),
-          ],
-        ),
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(
-          color: accentColor.withOpacity(0.2),
-          width: 1,
-        ),
-        boxShadow: [
-          BoxShadow(
-            color: colorScheme.shadow.withOpacity(0.05),
-            blurRadius: 8,
-            offset: const Offset(0, 2),
-          ),
-        ],
-      ),
-      child: Column(
-        children: [
-          Container(
-            padding: const EdgeInsets.all(8),
-            decoration: BoxDecoration(
-              color: accentColor.withOpacity(0.2),
-              shape: BoxShape.circle,
-            ),
-            child: Icon(
-              icon,
-              color: accentColor,
-              size: 20,
-            ),
-          ),
-          const SizedBox(height: 8),
-          Text(
-            value,
-            style: theme.textTheme.headlineSmall?.copyWith(
-              fontWeight: FontWeight.bold,
-              color: colorScheme.onSurface,
-            ),
-          ),
-          Text(
-            label,
-            style: theme.textTheme.bodySmall?.copyWith(
-              color: colorScheme.onSurface.withOpacity(0.7),
-              fontWeight: FontWeight.w500,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildUserDetailsCard(BuildContext context, dynamic user,
-      ThemeData theme, ColorScheme colorScheme) {
-    return Container(
-      margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-      padding: const EdgeInsets.all(20),
-      decoration: BoxDecoration(
-        color: colorScheme.surface,
-        borderRadius: BorderRadius.circular(20),
-        border: Border.all(
-          color: colorScheme.outline.withOpacity(0.1),
-          width: 1,
-        ),
-        boxShadow: [
-          BoxShadow(
-            color: colorScheme.shadow.withOpacity(0.08),
-            blurRadius: 12,
-            offset: const Offset(0, 4),
-          ),
-        ],
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            'Contact Information',
-            style: theme.textTheme.titleLarge?.copyWith(
-              fontWeight: FontWeight.bold,
-              color: colorScheme.onSurface,
-            ),
-          ),
-          const SizedBox(height: 16),
-          if (user.email.isNotEmpty) ...[
-            _buildDetailRow(
-                Icons.email_outlined, 'Email', user.email, theme, colorScheme),
-            const SizedBox(height: 12),
-          ],
-          if (user.phone.isNotEmpty) ...[
-            _buildDetailRow(
-                Icons.phone_outlined, 'Phone', user.phone, theme, colorScheme),
-            const SizedBox(height: 12),
-          ],
-          if (user.address != null) ...[
-            _buildDetailRow(
-              Icons.location_on_outlined,
-              'Location',
-              '${user.address!.city}, ${user.address!.country}',
-              theme,
-              colorScheme,
-            ),
             const SizedBox(height: 16),
-          ],
-          if (user.company != null) ...[
-            Text(
-              'Work Information',
-              style: theme.textTheme.titleLarge?.copyWith(
-                fontWeight: FontWeight.bold,
-                color: colorScheme.onSurface,
+
+            // Basic Information
+            Container(
+              padding: const EdgeInsets.all(20),
+              decoration: BoxDecoration(
+                color: colorScheme.surface,
+                borderRadius: BorderRadius.circular(16),
+                border: Border.all(
+                  color: colorScheme.outline.withOpacity(0.1),
+                ),
+                boxShadow: [
+                  BoxShadow(
+                    color: colorScheme.shadow.withOpacity(0.08),
+                    blurRadius: 12,
+                    offset: const Offset(0, 4),
+                  ),
+                ],
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    'Basic Information',
+                    style: theme.textTheme.titleLarge?.copyWith(
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+                  _buildDetailRow(Icons.person_outline, 'Full Name',
+                      '${user.firstName} ${user.lastName}', theme, colorScheme),
+                  const SizedBox(height: 12),
+                  _buildDetailRow(Icons.alternate_email, 'Username',
+                      user.username, theme, colorScheme),
+                  const SizedBox(height: 12),
+                  _buildDetailRow(
+                      Icons.wc, 'Gender', user.gender, theme, colorScheme),
+                ],
               ),
             ),
+
             const SizedBox(height: 16),
-            _buildDetailRow(Icons.business_outlined, 'Company',
-                user.company!.name, theme, colorScheme),
-            const SizedBox(height: 12),
-            _buildDetailRow(Icons.badge_outlined, 'Position',
-                user.company!.title, theme, colorScheme),
-            const SizedBox(height: 12),
-            _buildDetailRow(Icons.apartment_outlined, 'Department',
-                user.company!.department, theme, colorScheme),
+
+            // Work Information
+            if (user.company != null) ...[
+              Container(
+                padding: const EdgeInsets.all(20),
+                decoration: BoxDecoration(
+                  color: colorScheme.surface,
+                  borderRadius: BorderRadius.circular(16),
+                  border: Border.all(
+                    color: colorScheme.outline.withOpacity(0.1),
+                  ),
+                  boxShadow: [
+                    BoxShadow(
+                      color: colorScheme.shadow.withOpacity(0.08),
+                      blurRadius: 12,
+                      offset: const Offset(0, 4),
+                    ),
+                  ],
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'Work Information',
+                      style: theme.textTheme.titleLarge?.copyWith(
+                        fontWeight: FontWeight.bold,
+                        color: colorScheme.onSurface,
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+                    _buildDetailRow(Icons.business_outlined, 'Company',
+                        user.company!.name, theme, colorScheme),
+                    const SizedBox(height: 12),
+                    _buildDetailRow(Icons.badge_outlined, 'Position',
+                        user.company!.title, theme, colorScheme),
+                    const SizedBox(height: 12),
+                    _buildDetailRow(Icons.apartment_outlined, 'Department',
+                        user.company!.department, theme, colorScheme),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 16),
+            ],
+
+            // Address Details
+            if (user.address != null) ...[
+              Container(
+                padding: const EdgeInsets.all(20),
+                decoration: BoxDecoration(
+                  color: colorScheme.surface,
+                  borderRadius: BorderRadius.circular(16),
+                  border: Border.all(
+                    color: colorScheme.outline.withOpacity(0.1),
+                  ),
+                  boxShadow: [
+                    BoxShadow(
+                      color: colorScheme.shadow.withOpacity(0.08),
+                      blurRadius: 12,
+                      offset: const Offset(0, 4),
+                    ),
+                  ],
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'Address Details',
+                      style: theme.textTheme.titleLarge?.copyWith(
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+                    _buildDetailRow(Icons.home_outlined, 'Address',
+                        user.address!.address, theme, colorScheme),
+                    const SizedBox(height: 12),
+                    _buildDetailRow(Icons.location_city, 'City',
+                        user.address!.city, theme, colorScheme),
+                    const SizedBox(height: 12),
+                    _buildDetailRow(
+                        Icons.map_outlined,
+                        'State',
+                        '${user.address!.state} (${user.address!.stateCode})',
+                        theme,
+                        colorScheme),
+                    const SizedBox(height: 12),
+                    _buildDetailRow(Icons.local_post_office, 'Postal Code',
+                        user.address!.postalCode, theme, colorScheme),
+                    const SizedBox(height: 12),
+                    _buildDetailRow(Icons.flag_outlined, 'Country',
+                        user.address!.country, theme, colorScheme),
+                  ],
+                ),
+              ),
+            ],
           ],
-        ],
+        ),
       ),
     );
   }
@@ -804,214 +710,6 @@ class _FullUserProfileViewState extends State<_FullUserProfileView>
           ),
         ),
       ],
-    );
-  }
-
-  Widget _buildEnhancedTabBar(ThemeData theme, ColorScheme colorScheme) {
-    return Container(
-      margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-      decoration: BoxDecoration(
-        color: colorScheme.surfaceContainerHighest.withOpacity(0.3),
-        borderRadius: BorderRadius.circular(12),
-      ),
-      child: TabBar(
-        indicator: BoxDecoration(
-          borderRadius: BorderRadius.circular(8),
-          gradient: LinearGradient(
-            colors: [
-              colorScheme.primary,
-              colorScheme.primary.withOpacity(0.8),
-            ],
-          ),
-        ),
-        indicatorSize: TabBarIndicatorSize.tab,
-        labelColor: colorScheme.onPrimary,
-        unselectedLabelColor: colorScheme.onSurface.withOpacity(0.7),
-        labelStyle: theme.textTheme.bodyMedium?.copyWith(
-          fontWeight: FontWeight.w600,
-        ),
-        tabs: const [
-          Tab(text: 'Posts'),
-          Tab(text: 'Todos'),
-          Tab(text: 'About'),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildPostsTab(
-      BuildContext context, UserProfileState state, ThemeData theme) {
-    if (state.isLoadingPosts) {
-      return _buildShimmerList();
-    }
-
-    if (state.posts.isEmpty) {
-      return _buildEmptyState(
-        icon: Icons.article_outlined,
-        title: 'No posts yet',
-        subtitle: 'This user hasn\'t shared any posts.',
-        theme: theme,
-      );
-    }
-
-    return RefreshIndicator(
-      onRefresh: () async {
-        context.read<UserProfileCubit>().loadUserProfile(state.user!.id);
-      },
-      child: ListView.builder(
-        padding: const EdgeInsets.all(16),
-        itemCount: state.posts.length,
-        itemBuilder: (context, index) {
-          final post = state.posts[index];
-          return PostCard(
-            post: post,
-            onTap: () {
-              context.goToPostDetail(post);
-            },
-          );
-        },
-      ),
-    );
-  }
-
-  Widget _buildTodosTab(
-      BuildContext context, UserProfileState state, ThemeData theme) {
-    if (state.isLoadingTodos) {
-      return _buildShimmerList();
-    }
-
-    if (state.todos.isEmpty) {
-      return _buildEmptyState(
-        icon: Icons.task_outlined,
-        title: 'No todos found',
-        subtitle: 'This user hasn\'t created any todos.',
-        theme: theme,
-      );
-    }
-
-    return RefreshIndicator(
-      onRefresh: () async {
-        context.read<UserProfileCubit>().loadUserProfile(state.user!.id);
-      },
-      child: ListView.builder(
-        padding: const EdgeInsets.all(16),
-        itemCount: state.todos.length,
-        itemBuilder: (context, index) {
-          final todo = state.todos[index];
-          return ProfileTodoTile(
-            todo: todo,
-            margin: const EdgeInsets.only(bottom: 12),
-          );
-        },
-      ),
-    );
-  }
-
-  Widget _buildAboutTab(BuildContext context, dynamic user, ThemeData theme) {
-    final colorScheme = theme.colorScheme;
-
-    return SingleChildScrollView(
-      padding: const EdgeInsets.all(16),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          // Basic Information
-          Container(
-            padding: const EdgeInsets.all(20),
-            decoration: BoxDecoration(
-              color: colorScheme.surface,
-              borderRadius: BorderRadius.circular(16),
-              border: Border.all(
-                color: colorScheme.outline.withOpacity(0.1),
-              ),
-            ),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  'Basic Information',
-                  style: theme.textTheme.titleLarge?.copyWith(
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-                const SizedBox(height: 16),
-                _buildDetailRow(Icons.person_outline, 'Full Name',
-                    '${user.firstName} ${user.lastName}', theme, colorScheme),
-                const SizedBox(height: 12),
-                _buildDetailRow(Icons.alternate_email, 'Username',
-                    user.username, theme, colorScheme),
-                const SizedBox(height: 12),
-                _buildDetailRow(
-                    Icons.wc, 'Gender', user.gender, theme, colorScheme),
-              ],
-            ),
-          ),
-
-          const SizedBox(height: 16),
-
-          // Full Address Information
-          if (user.address != null) ...[
-            Container(
-              padding: const EdgeInsets.all(20),
-              decoration: BoxDecoration(
-                color: colorScheme.surface,
-                borderRadius: BorderRadius.circular(16),
-                border: Border.all(
-                  color: colorScheme.outline.withOpacity(0.1),
-                ),
-              ),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    'Address Details',
-                    style: theme.textTheme.titleLarge?.copyWith(
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                  const SizedBox(height: 16),
-                  _buildDetailRow(Icons.home_outlined, 'Address',
-                      user.address!.address, theme, colorScheme),
-                  const SizedBox(height: 12),
-                  _buildDetailRow(Icons.location_city, 'City',
-                      user.address!.city, theme, colorScheme),
-                  const SizedBox(height: 12),
-                  _buildDetailRow(
-                      Icons.map_outlined,
-                      'State',
-                      '${user.address!.state} (${user.address!.stateCode})',
-                      theme,
-                      colorScheme),
-                  const SizedBox(height: 12),
-                  _buildDetailRow(Icons.local_post_office, 'Postal Code',
-                      user.address!.postalCode, theme, colorScheme),
-                  const SizedBox(height: 12),
-                  _buildDetailRow(Icons.flag_outlined, 'Country',
-                      user.address!.country, theme, colorScheme),
-                ],
-              ),
-            ),
-          ],
-        ],
-      ),
-    );
-  }
-
-  Widget _buildShimmerList() {
-    return ListView.builder(
-      padding: const EdgeInsets.all(16),
-      itemCount: 5,
-      itemBuilder: (context, index) {
-        return Container(
-          margin: const EdgeInsets.only(bottom: 16),
-          height: 120,
-          decoration: BoxDecoration(
-            color: Colors.grey.withOpacity(0.2),
-            borderRadius: BorderRadius.circular(16),
-          ),
-          child: const Center(child: LoadingIndicator()),
-        );
-      },
     );
   }
 
