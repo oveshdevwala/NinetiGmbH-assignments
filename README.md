@@ -5,17 +5,6 @@ A comprehensive Flutter application showcasing modern development practices with
 ## 📱 Project Overview
 ### **ScreenShot**
 
-![Screenshot_2025-06-04-17-13-37-36_309b0f946aaca84e3945f034d1efaf45](https://github.com/user-attachments/assets/98b55395-85ac-407f-b7c2-d191b16d8b7b | highte=100  )
-![Screenshot_2025-06-04-17-13-32-83_309b0f946aaca84e3945f034d1efaf45](https://github.com/user-attachments/assets/273daffb-5668-43a7-a0a8-da2f9a26ba7c | 230x600 )
-![Screenshot_2025-06-04-17-13-29-03_309b0f946aaca84e3945f034d1efaf45](https://github.com/user-attachments/assets/fb148fdc-67ce-4320-9ccf-d36dd2c4456b)
-![Screenshot_2025-06-04-17-13-26-59_309b0f946aaca84e3945f034d1efaf45](https://github.com/user-attachments/assets/e8c357b8-f6f0-482b-b4f5-bf0e06f25b4c)
-![Screenshot_2025-06-04-17-13-21-22_309b0f946aaca84e3945f034d1efaf45](https://github.com/user-attachments/assets/5b0438b0-8127-48cf-af49-b8e5c7d08adf)
-![Screenshot_2025-06-04-17-13-15-54_309b0f946aaca84e3945f034d1efaf45](https://github.com/user-attachments/assets/14487e0b-f6e7-4b63-be89-469ea420fb96)
-![Screenshot_2025-06-04-17-13-09-60_309b0f946aaca84e3945f034d1efaf45](https://github.com/user-attachments/assets/06c237f3-170b-4759-99f0-0befc6ac8b73)
-![Screenshot_2025-06-04-17-13-06-79_309b0f946aaca84e3945f034d1efaf45](https://github.com/user-attachments/assets/ecca3f31-d2d6-4313-927f-448a269055e5)
-![Screenshot_2025-06-04-17-13-02-35_309b0f946aaca84e3945f034d1efaf45](https://github.com/user-attachments/assets/ddb9b3fc-a31b-46be-abce-825e6929a9ab)
-![Screenshot_2025-06-04-17-12-59-60_309b0f946aaca84e3945f034d1efaf45](https://github.com/user-attachments/assets/6183f232-0736-4043-8835-807341acd5a5)
-
 This application demonstrates advanced Flutter development by building a full-featured user management system that:
 
 - **Offline-First Architecture**: Works seamlessly offline with ObjectBox local database
