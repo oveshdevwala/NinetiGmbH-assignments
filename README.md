@@ -4,6 +4,7 @@ A comprehensive Flutter application showcasing modern development practices with
 
 ## 📱 Project Overview
 ### **ScreenShot**
+**Attached IN the Assets Folder**
 
 This application demonstrates advanced Flutter development by building a full-featured user management system that:
 
